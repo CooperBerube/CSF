@@ -19,7 +19,7 @@ UInt256 uint256_create_from_u32( uint32_t val ) {
 UInt256 uint256_create( const uint32_t data[8] ) {
   UInt256 result;
   for (int i = 0; i < 8; i++) {
-      result.data[i] = data[i];
+      result.data[i] = data[i]; // copies data
   }
   return result;
 }
@@ -43,6 +43,7 @@ char *uint256_format_as_hex( UInt256 val ) {
 // Index 0 is the least significant 32 bits, index 7 is the most
 // significant 32 bits.
 uint32_t uint256_get_bits( UInt256 val, unsigned index ) {
+  // Fail if index is out of bounds
   if(index >= 8) {
     exit(EXIT_FAILURE);
   }
@@ -52,6 +53,7 @@ uint32_t uint256_get_bits( UInt256 val, unsigned index ) {
 
 // Return 1 if bit at given index is set, 0 otherwise.
 int uint256_is_bit_set( UInt256 val, unsigned index ) {
+  // Fail if index is out of bounds
   if (index >= 256) {
     exit(EXIT_FAILURE);
   }
