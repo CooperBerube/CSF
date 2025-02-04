@@ -28,7 +28,7 @@ UInt256 uint256_create( const uint32_t data[8] ) {
 UInt256 uint256_create_from_hex( const char *hex ) {
   UInt256 result = {0};
   size_t len = strlen(hex);
-  
+
   for (size_t i = 0; i < len; i++) {
     char c = hex[len - 1 - i];
     uint32_t value;
@@ -121,7 +121,27 @@ UInt256 uint256_negate( UInt256 val ) {
 // Compute the product of two UInt256 values.
 UInt256 uint256_mul( UInt256 left, UInt256 right ) {
   UInt256 product = {0};
-  // TODO: implement
+
+  for (int i = 0; i < 8; i++) {
+    for (int j = 0; j < 8; j++) {
+      if (i + j < 8) {
+        uint64_t mul = (uint64_t)left.data[i] * right.data[j];
+        uint64_t carry = 0;
+
+        for (int k = 0; k + i + j < 8; k++) {
+          uint64_t sum = product.data[i + j + k] + (mul & 0xFFFFFFFF) + carry;
+          product.data[i + j + k] = sum & 0xFFFFFFFF;
+          carry = sum >> 32;
+          mul >>= 32;
+          
+          if (mul == 0 && carry == 0) {
+            break;
+          }
+        }
+      }
+    }
+  }
+
   return product;
 }
 
