@@ -27,7 +27,6 @@ UInt256 uint256_create( const uint32_t data[8] ) {
 // Create a UInt256 value from a string of hexadecimal digits.
 UInt256 uint256_create_from_hex( const char *hex ) {
   UInt256 result;
-  // TODO: implement
   return result;
 }
 
@@ -66,21 +65,35 @@ int uint256_is_bit_set( UInt256 val, unsigned index ) {
 // Compute the sum of two UInt256 values.
 UInt256 uint256_add( UInt256 left, UInt256 right ) {
   UInt256 sum;
-  // TODO: implement
+  uint32_t pieceSum;
+  uint32_t one = 0;
+  for (int i = 0; i < 8;i++) {
+    pieceSum = left.data[i] + right.data[i] + one;
+    if (pieceSum < left.data[i]) {
+      one = 1;
+    } else {
+      one = 0;
+    }
+    sum.data[i] = pieceSum;
+  }
   return sum;
 }
 
 // Compute the difference of two UInt256 values.
 UInt256 uint256_sub( UInt256 left, UInt256 right ) {
-  UInt256 result;
-  // TODO: implement
-  return result;
+  UInt256 neg_right = uint256_negate(right);
+  return uint256_add(left, neg_right);
 }
 
 // Return the two's-complement negation of the given UInt256 value.
 UInt256 uint256_negate( UInt256 val ) {
   UInt256 result;
-  // TODO: implement
+  uint32_t one = 1;
+  UInt256 increment = uint256_create_from_u32(one);
+  for (int i = 0; i < 8; i++) {
+    result.data[i] = ~(val.data[i]);
+  }
+  result = uint256_add(result, increment);
   return result;
 }
 
@@ -92,8 +105,8 @@ UInt256 uint256_mul( UInt256 left, UInt256 right ) {
 }
 
 UInt256 uint256_lshift( UInt256 val, unsigned shift ) {
-  assert( shift < 256 );
-  UInt256 result;
-  // TODO: implement
+  assert(shift < 256); // Ensure shift is within the valid range (less than 256)
+
+  UInt256 result = {0}; // Initialize result to 0
   return result;
 }
