@@ -145,6 +145,21 @@ UInt256 uint256_mul( UInt256 left, UInt256 right ) {
 UInt256 uint256_lshift( UInt256 val, unsigned shift ) {
   assert(shift < 256); // Ensure shift is within the valid range (less than 256)
 
-  UInt256 result = {0}; // Initialize result to 0
+  UInt256 result = val; // Initialize result to 0
+
+  for (int i = 0; i < shift; i++) {
+    uint32_t next = 0;
+    uint32_t curr = 0;
+    for (int j = 0; j < 8; j++) {
+      curr = result.data[j] & (1 << 31);
+      if (curr != 0) {
+        curr = 1;
+      } else {
+        curr = 0;
+      }
+      result.data[j] = (result.data[j] << 1) + next;
+      next = curr;
+    }
+  }
   return result;
 }
