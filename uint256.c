@@ -26,7 +26,7 @@ UInt256 uint256_create( const uint32_t data[8] ) {
 
 // Create a UInt256 value from a string of hexadecimal digits.
 UInt256 uint256_create_from_hex( const char *hex ) {
-  UInt256 result;
+  UInt256 result = {0};
   return result;
 }
 
@@ -66,13 +66,13 @@ int uint256_is_bit_set( UInt256 val, unsigned index ) {
 UInt256 uint256_add( UInt256 left, UInt256 right ) {
   UInt256 sum;
   uint32_t pieceSum;
-  uint32_t one = 0;
-  for (int i = 0; i < 8;i++) {
-    pieceSum = left.data[i] + right.data[i] + one;
-    if (pieceSum < left.data[i]) {
-      one = 1;
+  uint32_t carry = 0; // Initialize carry to 0
+  for (int i = 0; i < 8; i++) {
+    pieceSum = left.data[i] + right.data[i] + carry;
+    if (pieceSum < left.data[i] || pieceSum < right.data[i]) {
+      carry = 1; // Set carry flag if there's an overflow
     } else {
-      one = 0;
+      carry = 0; // No carry if the sum doesn't overflow
     }
     sum.data[i] = pieceSum;
   }
@@ -99,8 +99,8 @@ UInt256 uint256_negate( UInt256 val ) {
 
 // Compute the product of two UInt256 values.
 UInt256 uint256_mul( UInt256 left, UInt256 right ) {
-  UInt256 product;
-  // TODO: implement
+  UInt256 product = {0};
+  // TODO
   return product;
 }
 
