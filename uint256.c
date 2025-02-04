@@ -54,9 +54,34 @@ UInt256 uint256_create_from_hex( const char *hex ) {
 // Return a dynamically-allocated string of hex digits representing the
 // given UInt256 value.
 char *uint256_format_as_hex( UInt256 val ) {
-  char *hex = NULL;
-  // TODO: implement
-  return hex;
+    char *hex = (char*) malloc(65 * sizeof(char));
+    if (hex == NULL) {
+        return NULL; 
+    }
+
+    char buf[9];
+    int index = 0;
+
+    for (int i = 7; i >= 0; i--) {
+        uint32_t num = uint256_get_bits(val, i);
+        sprintf(buf, "%08x", num);
+
+        for (int j = 0; j < 8; j++) {
+            hex[index++] = buf[j];
+        }
+    }
+
+    hex[index] = '\0';
+
+    char *result = hex;
+    while (*result == '0' && *(result + 1) != '\0') {
+        result++;
+    }
+
+    char *result_no_zeros = strdup(result);
+    free(hex);
+
+    return result_no_zeros;
 }
 
 // Get 32 bits of data from a UInt256 value.
