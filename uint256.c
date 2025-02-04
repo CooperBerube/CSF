@@ -9,7 +9,7 @@
 // all other bits are set to 0.
 UInt256 uint256_create_from_u32( uint32_t val ) {
   UInt256 result = {0};
-  result.data[0] = val;
+  result.data[0] = val; // little endian (least significant)
   return result;
 }
 
@@ -27,8 +27,9 @@ UInt256 uint256_create( const uint32_t data[8] ) {
 // Create a UInt256 value from a string of hexadecimal digits.
 UInt256 uint256_create_from_hex( const char *hex ) {
   UInt256 result = {0};
-  size_t len = strlen(hex);
+  size_t len = strlen(hex); // finds ammount of hex digits
 
+  // Finds digit then classifies it
   for (size_t i = 0; i < len; i++) {
     char c = hex[len - 1 - i];
     uint32_t value;
@@ -43,6 +44,7 @@ UInt256 uint256_create_from_hex( const char *hex ) {
       exit(EXIT_FAILURE);
     }
 
+    // forms number
     size_t index = i / 8;
     size_t shift = (i % 8) * 4;
     result.data[index] |= value << shift;
@@ -54,18 +56,21 @@ UInt256 uint256_create_from_hex( const char *hex ) {
 // Return a dynamically-allocated string of hex digits representing the
 // given UInt256 value.
 char *uint256_format_as_hex( UInt256 val ) {
-    char *hex = (char*) malloc(65 * sizeof(char));
+    char *hex = (char*) malloc(65 * sizeof(char)); // enough space for 64 digits plus null
     if (hex == NULL) {
         return NULL; 
     }
 
+    // creates buffer as directed in assignment instructions
     char buf[9];
     int index = 0;
 
+    // Iterate over each 32-bit part of the UInt256 value in reverse order
     for (int i = 7; i >= 0; i--) {
         uint32_t num = uint256_get_bits(val, i);
         sprintf(buf, "%08x", num);
 
+        // Copy buffer content
         for (int j = 0; j < 8; j++) {
             hex[index++] = buf[j];
         }
@@ -73,6 +78,7 @@ char *uint256_format_as_hex( UInt256 val ) {
 
     hex[index] = '\0';
 
+    // skips zeros
     char *result = hex;
     while (*result == '0' && *(result + 1) != '\0') {
         result++;
@@ -110,21 +116,21 @@ int uint256_is_bit_set( UInt256 val, unsigned index ) {
 
 // Compute the sum of two UInt256 values.
 UInt256 uint256_add( UInt256 left, UInt256 right ) {
-  UInt256 sum = {0};
-  uint32_t carry = 0;
+    UInt256 sum = {0};
+    uint64_t carry = 0;
 
-  for (int i = 0; i < 8; i++) {
-    uint64_t temp = (uint64_t)left.data[i] + right.data[i] + carry;
-    sum.data[i] = (uint32_t)temp;
-    carry = temp >> 32;
-  }
+    for (int i = 0; i < 8; i++) {
+        uint64_t temp = (uint64_t)left.data[i] + right.data[i] + carry;
+        sum.data[i] = (uint32_t)temp;
+        carry = temp >> 32; // must be uint64_t so that behavior is not undefined
+    }
 
-  return sum;
+    return sum; // Return the computed sum
 }
 
 // Compute the difference of two UInt256 values.
 UInt256 uint256_sub( UInt256 left, UInt256 right ) {
-  UInt256 neg_right = uint256_negate(right);
+  UInt256 neg_right = uint256_negate(right); // a - b = a + (-b)
   return uint256_add(left, neg_right);
 }
 
@@ -133,10 +139,12 @@ UInt256 uint256_negate( UInt256 val ) {
   UInt256 result;
   uint32_t one = 1;
   UInt256 increment = uint256_create_from_u32(one);
+  // flip bits
   for (int i = 0; i < 8; i++) {
     result.data[i] = ~(val.data[i]);
   }
-  result = uint256_add(result, increment);
+  // add one
+  result = uint256_add(result, increment); 
   return result;
 }
 
@@ -144,12 +152,12 @@ UInt256 uint256_negate( UInt256 val ) {
 UInt256 uint256_mul( UInt256 left, UInt256 right ) {
     UInt256 product = {0};
 
+    // Ex. multiply by powers of two and shift (37×m=(25×m)+(22×m)+(20×m))
     for (int i = 0; i < 256; i++) {
         if (uint256_is_bit_set(left, i)) {
             product = uint256_add(product, uint256_lshift(right, i));
         }
     }
-
     return product;
 }
 
@@ -158,7 +166,7 @@ UInt256 uint256_lshift( UInt256 val, unsigned shift ) {
 
   UInt256 result = val; // Initialize result to 0
 
-  for (int i = 0; i < shift; i++) {
+  for (unsigned int i = 0; i < shift; i++) { // unsigned int to make comparison of same type
     uint32_t next = 0;
     uint32_t curr = 0;
     for (int j = 0; j < 8; j++) {
