@@ -142,29 +142,15 @@ UInt256 uint256_negate( UInt256 val ) {
 
 // Compute the product of two UInt256 values.
 UInt256 uint256_mul( UInt256 left, UInt256 right ) {
-  UInt256 product = {0};
+    UInt256 product = {0};
 
-  for (int i = 0; i < 8; i++) {
-    for (int j = 0; j < 8; j++) {
-      if (i + j < 8) {
-        uint64_t mul = (uint64_t)left.data[i] * right.data[j];
-        uint64_t carry = 0;
-
-        for (int k = 0; k + i + j < 8; k++) {
-          uint64_t sum = product.data[i + j + k] + (mul & 0xFFFFFFFF) + carry;
-          product.data[i + j + k] = sum & 0xFFFFFFFF;
-          carry = sum >> 32;
-          mul >>= 32;
-          
-          if (mul == 0 && carry == 0) {
-            break;
-          }
+    for (int i = 0; i < 256; i++) {
+        if (uint256_is_bit_set(left, i)) {
+            product = uint256_add(product, uint256_lshift(right, i));
         }
-      }
     }
-  }
 
-  return product;
+    return product;
 }
 
 UInt256 uint256_lshift( UInt256 val, unsigned shift ) {
