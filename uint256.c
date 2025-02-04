@@ -27,6 +27,27 @@ UInt256 uint256_create( const uint32_t data[8] ) {
 // Create a UInt256 value from a string of hexadecimal digits.
 UInt256 uint256_create_from_hex( const char *hex ) {
   UInt256 result = {0};
+  size_t len = strlen(hex);
+  
+  for (size_t i = 0; i < len; i++) {
+    char c = hex[len - 1 - i];
+    uint32_t value;
+
+    if (c >= '0' && c <= '9') {
+      value = c - '0';
+    } else if (c >= 'a' && c <= 'f') {
+      value = c - 'a' + 10;
+    } else if (c >= 'A' && c <= 'F') {
+      value = c - 'A' + 10;
+    } else {
+      exit(EXIT_FAILURE);
+    }
+
+    size_t index = i / 8;
+    size_t shift = (i % 8) * 4;
+    result.data[index] |= value << shift;
+  }
+
   return result;
 }
 
@@ -100,7 +121,7 @@ UInt256 uint256_negate( UInt256 val ) {
 // Compute the product of two UInt256 values.
 UInt256 uint256_mul( UInt256 left, UInt256 right ) {
   UInt256 product = {0};
-  // TODO
+  // TODO: implement
   return product;
 }
 
