@@ -85,18 +85,15 @@ int uint256_is_bit_set( UInt256 val, unsigned index ) {
 
 // Compute the sum of two UInt256 values.
 UInt256 uint256_add( UInt256 left, UInt256 right ) {
-  UInt256 sum;
-  uint32_t pieceSum;
-  uint32_t carry = 0; // Initialize carry to 0
+  UInt256 sum = {0};
+  uint32_t carry = 0;
+
   for (int i = 0; i < 8; i++) {
-    pieceSum = left.data[i] + right.data[i] + carry;
-    if (pieceSum < left.data[i] || pieceSum < right.data[i]) {
-      carry = 1; // Set carry flag if there's an overflow
-    } else {
-      carry = 0; // No carry if the sum doesn't overflow
-    }
-    sum.data[i] = pieceSum;
+    uint64_t temp = (uint64_t)left.data[i] + right.data[i] + carry;
+    sum.data[i] = (uint32_t)temp;
+    carry = temp >> 32;
   }
+
   return sum;
 }
 
