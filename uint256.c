@@ -165,8 +165,21 @@ UInt256 uint256_lshift( UInt256 val, unsigned shift ) {
   assert(shift < 256); // Ensure shift is within the valid range (less than 256)
 
   UInt256 result = val; // Initialize result to 0
+  unsigned int big_shift = shift / 32;
+  unsigned int small_shift = shift % 32;
+  
+  for (unsigned int i = 0; i < big_shift; i++) {
+    uint32_t temp;
+    uint32_t curr = 0;
+    for (unsigned int i = 0; i < 8; i++) {
+      temp = result.data[i];
+      result.data[i] = curr;
+      curr = temp;
+      
+    }
+  }
 
-  for (unsigned int i = 0; i < shift; i++) { // unsigned int to make comparison of same type
+  for (unsigned int i = 0; i < small_shift; i++) { // unsigned int to make comparison of same type
     uint32_t next = 0;
     uint32_t curr = 0;
     for (int j = 0; j < 8; j++) {
