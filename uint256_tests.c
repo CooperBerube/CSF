@@ -305,7 +305,7 @@ void test_mul( TestObjs *objs ) {
 void test_lshift( TestObjs *objs ) {
   UInt256 result;
 
-  UInt256 two = { { 2,0,0,0,0,0,0,0 } }, four = { { 4,0,0,0,0,0,0,0 } };
+  UInt256 two = { { 2,0,0,0,0,0,0,0 } }, four = { { 4,0,0,0,0,0,0,0 } }, shifted_one = { { 0,1,0,0,0,0,0,0 } };
 
   // some very basic tests
 
@@ -317,6 +317,13 @@ void test_lshift( TestObjs *objs ) {
 
   result = uint256_lshift( objs->one, 2 );
   ASSERT_SAME( four, result );
+
+  //Added tests
+  result = uint256_lshift( objs->one, 255 );
+  ASSERT_SAME( objs->msb_set, result);
+
+  result = uint256_lshift( objs->one, 32);
+  ASSERT_SAME( shifted_one, result);
 
   // a more complicated test
   {
