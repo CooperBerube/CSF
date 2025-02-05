@@ -215,6 +215,17 @@ void test_add( TestObjs *objs ) {
 
   result = uint256_add( objs->max, objs->one );
   ASSERT_SAME( objs->zero, result );
+
+  
+  //added tests
+  result = uint256_add( objs->msb_set, objs->msb_set );
+  ASSERT_SAME( objs->zero, result );
+
+  
+  UInt256 shifted_one = { { 0,1,0,0,0,0,0,0 } };
+  UInt256 max_in_first_box = { {0x80000000U,0U,0U,0U,0U,0U,0U,0U} };
+  result = uint256_add(max_in_first_box, max_in_first_box);
+  ASSERT_SAME(shifted_one, result);
 }
 
 void test_sub( TestObjs *objs ) {
@@ -228,6 +239,12 @@ void test_sub( TestObjs *objs ) {
 
   result = uint256_sub( objs->zero, objs->one );
   ASSERT_SAME( objs->max, result );
+
+  //Added tests
+  UInt256 shifted_one = { { 0,1,0,0,0,0,0,0 } };
+  UInt256 max_in_first_box = { {0x80000000U,0U,0U,0U,0U,0U,0U,0U} };
+  result = uint256_sub(shifted_one, max_in_first_box);
+  ASSERT_SAME(max_in_first_box,result);
 }
 
 void test_negate( TestObjs *objs ) {
@@ -241,6 +258,19 @@ void test_negate( TestObjs *objs ) {
 
   result = uint256_negate( objs->max );
   ASSERT_SAME( objs->one, result );
+
+  //Added tests
+  UInt256 little_number = { {0xffffffffU,0xffffffffU,0xffffffffU,0xffffffffU,0U,0U,0U,0U} };
+  UInt256 big_number = { {0U,0U,0U,0U,0xffffffffU,0xffffffffU,0xffffffffU,0xffffffffU} };
+  UInt256 inv_ln = { {1U,0U,0U,0U,0xffffffffU,0xffffffffU,0xffffffffU,0xffffffffU} };
+  UInt256 inv_bn = { {0U,0U,0U,0U,1U,0U,0U,0U} };
+
+  result = uint256_negate(little_number);
+  ASSERT_SAME(inv_ln,result);
+
+  result = uint256_negate(big_number);
+  ASSERT_SAME(inv_bn,result);
+  
 }
 
 void test_neg_overflow( TestObjs *objs ) {
@@ -324,6 +354,9 @@ void test_lshift( TestObjs *objs ) {
 
   result = uint256_lshift( objs->one, 32);
   ASSERT_SAME( shifted_one, result);
+
+  result = uint256_lshift( objs->one, 0);
+  ASSERT_SAME( objs->one, result);
 
   // a more complicated test
   {
