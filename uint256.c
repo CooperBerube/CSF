@@ -34,6 +34,7 @@ UInt256 uint256_create_from_hex( const char *hex ) {
     char c = hex[len - 1 - i];
     uint32_t value;
 
+    // sorts value into hex digit
     if (c >= '0' && c <= '9') {
       value = c - '0';
     } else if (c >= 'a' && c <= 'f') {
@@ -41,15 +42,15 @@ UInt256 uint256_create_from_hex( const char *hex ) {
     } else if (c >= 'A' && c <= 'F') {
       value = c - 'A' + 10;
     } else {
+      // exit if not valid
       exit(EXIT_FAILURE);
     }
-
     // forms number
     size_t index = i / 8;
     size_t shift = (i % 8) * 4;
     result.data[index] |= value << shift;
-  }
 
+  }
   return result;
 }
 
@@ -57,6 +58,7 @@ UInt256 uint256_create_from_hex( const char *hex ) {
 // given UInt256 value.
 char *uint256_format_as_hex( UInt256 val ) {
     char *hex = (char*) malloc(65 * sizeof(char)); // enough space for 64 digits plus null
+    // return null if malloc failure
     if (hex == NULL) {
         return NULL; 
     }
@@ -69,13 +71,12 @@ char *uint256_format_as_hex( UInt256 val ) {
     for (int i = 7; i >= 0; i--) {
         uint32_t num = uint256_get_bits(val, i);
         sprintf(buf, "%08x", num);
-
-        // Copy buffer content
         for (int j = 0; j < 8; j++) {
             hex[index++] = buf[j];
         }
     }
-
+    
+    // terminator
     hex[index] = '\0';
 
     // skips zeros
@@ -84,8 +85,9 @@ char *uint256_format_as_hex( UInt256 val ) {
         result++;
     }
 
+    // duplicates string
     char *result_no_zeros = strdup(result);
-    free(hex);
+    free(hex); // free memory
 
     return result_no_zeros;
 }
@@ -171,6 +173,7 @@ UInt256 uint256_lshift( UInt256 val, unsigned shift ) {
   for (unsigned int i = 0; i < big_shift; i++) {
     uint32_t temp;
     uint32_t curr = 0;
+    
     for (unsigned int i = 0; i < 8; i++) {
       temp = result.data[i];
       result.data[i] = curr;

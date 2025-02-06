@@ -53,6 +53,7 @@ void test_lshift( TestObjs *objs );
 void test_add_zero( TestObjs *objs );
 void test_sub_zero( TestObjs *objs );
 void test_mul_zero( TestObjs *objs );
+void test_mul_one( TestObjs *objs );
 void test_lshift_zero( TestObjs *objs );
 
 void test_add_overflow( TestObjs *objs );
@@ -92,6 +93,7 @@ int main( int argc, char **argv ) {
   TEST ( test_add_genfact );
   TEST ( test_mul_genfact );
   TEST ( test_sub_genfact );
+  TEST ( test_mul_one );
 
   TEST_FINI();
 }
@@ -414,6 +416,12 @@ void test_mul_zero( TestObjs *objs ) {
   UInt256 result;
   result = uint256_mul( objs->one, objs->zero );
   ASSERT_SAME( objs->zero, result );
+}
+
+void test_mul_one( TestObjs *objs ) {
+  UInt256 result;
+  result = uint256_mul( objs->one, objs->one );
+  ASSERT_SAME( objs->one, result);
 }
 
 void test_lshift_zero( TestObjs *objs ) {
