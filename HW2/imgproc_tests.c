@@ -110,7 +110,17 @@ void test_rgb_basic( TestObjs *objs );
 void test_grayscale_basic( TestObjs *objs );
 void test_fade_basic( TestObjs *objs );
 void test_kaleidoscope_basic( TestObjs *objs );
+
 // TODO: add prototypes for additional test functions
+
+void test_get_r( TestObjs *objs );
+void test_get_g( TestObjs *objs );
+void test_get_b( TestObjs *objs );
+void test_get_a( TestObjs *objs );
+void test_make_pixel( TestObjs *objs );
+void test_to_grayscale( TestObjs *objs );
+void test_gradient( TestObjs *objs );
+
 
 int main( int argc, char **argv ) {
   // allow the specific test to execute to be specified as the

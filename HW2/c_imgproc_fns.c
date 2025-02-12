@@ -26,6 +26,10 @@ uint32_t make_pixel( uint32_t r, uint32_t g, uint32_t b, uint32_t a ) {
   return (r << 24) | (g << 16) | (b << 8) | a;
 }
 
+int32_t compute_index( struct Image *img, int32_t col, int32_t row ) {
+  return row * img->width + col;
+}
+
 uint32_t to_grayscale( uint32_t pixel ) {
   uint32_t r = get_r(pixel);
   uint32_t g = get_g(pixel);
@@ -36,11 +40,8 @@ uint32_t to_grayscale( uint32_t pixel ) {
 }
 
 int64_t gradient( int64_t x, int64_t max ) {
-  return (x * 255) / max;
-}
-
-int32_t compute_index( struct Image *img, int32_t col, int32_t row ) {
-  return row * img->width + col;
+  int64_t tmp = (2000000000 * x) / (1000000 * max);
+  return 1000000 - ((tmp - 1000) * (tmp - 1000));
 }
 
 // Convert input pixels to grayscale.
@@ -101,8 +102,6 @@ void imgproc_rgb( struct Image *input_img, struct Image *output_img ) {
   
   int32_t input_width = input_img->width;
   int32_t input_height = input_img->height;
-  int32_t output_width = input_width * 2;
-  int32_t output_height = input_height * 2;
 
   for (int32_t y = 0; y < input_height; ++y) {
     for (int32_t x = 0; x < input_width; ++x) {
@@ -138,8 +137,33 @@ void imgproc_rgb( struct Image *input_img, struct Image *output_img ) {
 //   output_img - pointer to the output Image
 void imgproc_fade( struct Image *input_img, struct Image *output_img ) {
   if (input_img == NULL || output_img == NULL) {
-        return;
+    return;
+  }
+  
+    int32_t width = input_img->width;
+    int32_t height = input_img->height;
+
+    for (int32_t y = 0; y < height; ++y) {
+        for (int32_t x = 0; x < width; ++x) {
+            uint32_t input_pixel = input_img->data[compute_index(input_img, x, y)];
+
+            uint32_t r = get_r(input_pixel);
+            uint32_t g = get_g(input_pixel);
+            uint32_t b = get_b(input_pixel);
+            uint32_t a = get_a(input_pixel);
+
+            int64_t tr = gradient(y, height);
+            int64_t tc = gradient(x, width);
+
+            r = (tr * tc * r) / 1000000000000;
+            g = (tr * tc * g) / 1000000000000;
+            b = (tr * tc * b) / 1000000000000;
+
+            uint32_t output_pixel = make_pixel(r, g, b, a);
+            output_img->data[compute_index(output_img, x, y)] = output_pixel;
+        }
     }
+
 }
 
 // Render a "kaleidoscope" transformation of input_img in output_img.
@@ -182,6 +206,19 @@ void imgproc_fade( struct Image *input_img, struct Image *output_img ) {
 //   1 if successful, 0 if the transformation fails because the
 //   width and height of input_img are not the same.
 int imgproc_kaleidoscope( struct Image *input_img, struct Image *output_img ) {
-  // TODO: implement
-  return 0;
+  if (input_img == NULL || output_img == NULL) {
+    return 0;
+  }
+  
+  int32_t input_width = input_img->width;
+  int32_t input_height = input_img->height;
+
+  if (input_height != input_width) {
+    return 0;
+  }
+
+  // TODO
+
+  return 1;
+  
 }
