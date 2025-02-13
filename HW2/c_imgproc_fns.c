@@ -238,26 +238,6 @@ int imgproc_kaleidoscope( struct Image *input_img, struct Image *output_img ) {
     }
   }
 
-  int32_t wedge_length = input_width/2;
-  int32_t l = input_height - 1;
-
-  for (int32_t y = 0; y < wedge_length; y++) {
-    for (int32_t x = y; x < wedge_length; x++) {
-      uint32_t input_pixel = input_img->data[compute_index(input_img, x, y)];
-
-      uint32_t output_pixel = input_pixel;
-      output_img->data[compute_index(output_img, x, y)] = output_pixel;
-      output_img->data[compute_index(output_img, l - x, y)] = output_pixel;
-      output_img->data[compute_index(output_img, l - y, x)] = output_pixel;
-      output_img->data[compute_index(output_img, l - y, l - x)] = output_pixel;
-
-      output_img->data[compute_index(output_img, y, x)] = output_pixel;
-      output_img->data[compute_index(output_img, y, l - x)] = output_pixel;
-      output_img->data[compute_index(output_img, x, l - y)] = output_pixel;
-      output_img->data[compute_index(output_img, l - x, l - y)] = output_pixel;
-
-    }
-  }
 
   return 1;
 
