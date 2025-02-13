@@ -113,13 +113,13 @@ void test_kaleidoscope_basic( TestObjs *objs );
 
 // TODO: add prototypes for additional test functions
 
-void test_get_r( TestObjs *objs );
-void test_get_g( TestObjs *objs );
-void test_get_b( TestObjs *objs );
-void test_get_a( TestObjs *objs );
-void test_make_pixel( TestObjs *objs );
-void test_to_grayscale( TestObjs *objs );
-void test_gradient( TestObjs *objs );
+void test_get_r();
+void test_get_g();
+void test_get_b();
+void test_get_a();
+void test_make_pixel();
+void test_to_grayscale();
+void test_gradient();
 
 
 int main( int argc, char **argv ) {
@@ -137,6 +137,14 @@ int main( int argc, char **argv ) {
   TEST( test_grayscale_basic );
   TEST( test_fade_basic );
   TEST( test_kaleidoscope_basic );
+  // User tests
+  TEST( test_get_r );
+  TEST( test_get_g );
+  TEST( test_get_b );
+  TEST( test_get_a );
+  TEST( test_make_pixel );
+  TEST( test_to_grayscale );
+  TEST( test_gradient );
 
   TEST_FINI();
 }
@@ -410,3 +418,43 @@ void test_kaleidoscope_basic( TestObjs *objs ) {
   destroy_img( sq_test_kaleidoscope_expected );
 }
 
+////////////////////////////////////////////////////////////////////////
+// Addition Test Functions 
+////////////////////////////////////////////////////////////////////////
+
+void test_get_r() {
+  uint32_t pixel = 0x12345678;
+  ASSERT( get_r(pixel) == 0x12 );
+}
+
+void test_get_g() {
+  uint32_t pixel = 0x12345678;
+  ASSERT( get_g(pixel) == 0x34 );
+}
+
+void test_get_b() {
+  uint32_t pixel = 0x12345678;
+  ASSERT( get_b(pixel) == 0x56 );
+}
+
+void test_get_a() {
+  uint32_t pixel = 0x12345678;
+  ASSERT( get_a(pixel) == 0x78 );
+}
+
+void test_make_pixel() {
+  uint32_t pixel = make_pixel(0x12, 0x34, 0x56, 0x78);
+  ASSERT( pixel == 0x12345678 );
+}
+
+void test_to_grayscale() {
+  uint32_t pixel = 0x12345678;
+  uint32_t grayscale_pixel = to_grayscale(pixel);
+  ASSERT( get_r(grayscale_pixel) == get_g(grayscale_pixel) );
+  ASSERT( get_g(grayscale_pixel) == get_b(grayscale_pixel) );
+}
+
+void test_gradient() {
+  int64_t gradient_value = gradient(500000, 1000000);
+  ASSERT( gradient_value > 0 );
+}

@@ -99,4 +99,82 @@ int imgproc_kaleidoscope( struct Image *input_img, struct Image *output_img );
 
 // TODO: add prototypes for your helper functions
 
+// Helper function to extract the red component from a pixel.
+//
+// Parameters:
+//   pixel - the pixel value
+//
+// Returns:
+//   the red component of the pixel
+uint32_t get_r( uint32_t pixel );
+
+// Helper function to extract the green component from a pixel.
+//
+// Parameters:
+//   pixel - the pixel value
+//
+// Returns:
+//   the green component of the pixel
+uint32_t get_g( uint32_t pixel );
+
+// Helper function to extract the blue component from a pixel.
+//
+// Parameters:
+//   pixel - the pixel value
+//
+// Returns:
+//   the blue component of the pixel
+uint32_t get_b( uint32_t pixel );
+
+// Helper function to extract the alpha component from a pixel.
+//
+// Parameters:
+//   pixel - the pixel value
+//
+// Returns:
+//   the alpha component of the pixel
+uint32_t get_a( uint32_t pixel );
+
+// Helper function to create a pixel from its components.
+//
+// Parameters:
+//   r - the red component
+//   g - the green component
+//   b - the blue component
+//   a - the alpha component
+//
+// Returns:
+//   the composed pixel value
+uint32_t make_pixel( uint32_t r, uint32_t g, uint32_t b, uint32_t a );
+
+// Helper function to compute the index of a pixel in the image data array.
+//
+// Parameters:
+//   img - pointer to the Image
+//   col - the column of the pixel
+//   row - the row of the pixel
+//
+// Returns:
+//   the index of the pixel in the image data array
+int32_t compute_index( struct Image *img, int32_t col, int32_t row );
+
+// Helper function to convert a pixel to grayscale.
+//
+// Parameters:
+//   pixel - the pixel value
+//
+// Returns:
+//   the grayscale pixel value
+uint32_t to_grayscale( uint32_t pixel );
+
+// Helper function to compute a gradient value.
+//
+// Parameters:
+//   x   - the current value
+//   max - the maximum value
+//
+// Returns:
+//   the computed gradient value
+int64_t gradient( int64_t x, int64_t max );
+
 #endif // IMGPROC_H
