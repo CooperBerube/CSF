@@ -217,17 +217,23 @@ int imgproc_kaleidoscope( struct Image *input_img, struct Image *output_img ) {
   if (input_height != input_width) {
     return 0;
   }
+  //Checks to see if the picture is odd or even
   int32_t odd_factor = 0;
   if (input_width % 2 == 1) {
     odd_factor = 1;
   }
-  
+  /*If odd you kneed to add one to input width to copy it over
+  * successfully. Variable l stores the proper length for the temp array.
+  */
   int32_t wedge_length = (input_width + odd_factor)/2;
   int32_t l = wedge_length*2;
+  // Temp Array allows you to copy for odd and cut off the final row and column at the end.
   int32_t temp_result[l][l];
   
 
-  // TODO
+  /* copies the top corner known as A over to t the rest of the appropriate
+  *  tiles in the temp array 
+  */
   for (int32_t y = 0; y < wedge_length; y++) {
     for (int32_t x = y; x < wedge_length; x++) {
       uint32_t input_pixel = input_img->data[compute_index(input_img, x, y)];
@@ -247,13 +253,12 @@ int imgproc_kaleidoscope( struct Image *input_img, struct Image *output_img ) {
     }
   }
 
+  //Transfers the temp 2D array over to the ouput image leaving out the extra row if odd.
   for (int32_t x = 0; x < output_img->width; x++) {
     for (int32_t y = 0; y < output_img->height; y++) {
       output_img->data[compute_index(output_img, x, y)] = temp_result[x][y];
     }
   }
-
-
   return 1;
 
 }
