@@ -6,30 +6,40 @@
 
 // TODO: define your helper functions here
 
+//Gets the value of r, the red of the pixel.
 uint32_t get_r( uint32_t pixel ) {
   return (pixel >> 24) & 0xFF;
 }
 
+//Gets the value of g, the green of the pixel.
 uint32_t get_g( uint32_t pixel ) {
   return (pixel >> 16) & 0xFF;
 }
 
+//Gets the value of b, the blue of the pixel.
 uint32_t get_b( uint32_t pixel ) {
   return (pixel >> 8) & 0xFF;
 }
 
+//Gets the value of a, which is the alpha value determining opacity.
 uint32_t get_a( uint32_t pixel ) {
   return pixel & 0xFF;
 }
 
+//takes rgb and a and returns a pixel 
 uint32_t make_pixel( uint32_t r, uint32_t g, uint32_t b, uint32_t a ) {
   return (r << 24) | (g << 16) | (b << 8) | a;
 }
 
+//Finds the index of a specific x,y location defined
+//by rol and col in an Image struct.
 int32_t compute_index( struct Image *img, int32_t col, int32_t row ) {
   return row * img->width + col;
 }
 
+//Function for computing the new gray pixel for
+//a specific pixel. The variable y calculates the new
+//value for rgb with the input rgb.
 uint32_t to_grayscale( uint32_t pixel ) {
   uint32_t r = get_r(pixel);
   uint32_t g = get_g(pixel);
@@ -39,6 +49,9 @@ uint32_t to_grayscale( uint32_t pixel ) {
   return make_pixel(y, y, y, a);
 }
 
+//Function for computing the total fade value for a specific picture 
+//x is the location in either the column or row.
+//max is the pictures width or height.
 int64_t gradient( int64_t x, int64_t max ) {
   int64_t tmp = (2000000000 * x) / (1000000 * max);
   return 1000000 - ((tmp - 1000) * (tmp - 1000));
@@ -60,6 +73,8 @@ void imgproc_grayscale( struct Image *input_img, struct Image *output_img ) {
   int32_t width = input_img->width;
   int32_t height = input_img->height;
 
+  //gets each individual pixel, converts to grayscale
+  //with helper function above.
   for (int32_t y = 0; y < height; ++y) {
     for (int32_t x = 0; x < width; ++x) {
       uint32_t input_pixel = input_img->data[y * width + x];
@@ -104,6 +119,10 @@ void imgproc_rgb( struct Image *input_img, struct Image *output_img ) {
   int32_t input_width = input_img->width;
   int32_t input_height = input_img->height;
 
+  //Iterates through each pixel getting the rgb 
+  //components and seperating them into 
+  //the output image which has a sector for each
+  //of the rgb components
   for (int32_t y = 0; y < input_height; ++y) {
     for (int32_t x = 0; x < input_width; ++x) {
       uint32_t input_pixel = input_img->data[compute_index(input_img, x, y)];
@@ -144,8 +163,10 @@ void imgproc_fade( struct Image *input_img, struct Image *output_img ) {
     int32_t width = input_img->width;
     int32_t height = input_img->height;
 
+    //Iterates through each pixel, gets its rgb parts and then computes appropriate fade value.
     for (int32_t y = 0; y < height; ++y) {
         for (int32_t x = 0; x < width; ++x) {
+
             uint32_t input_pixel = input_img->data[compute_index(input_img, x, y)];
 
             uint32_t r = get_r(input_pixel);
@@ -153,6 +174,7 @@ void imgproc_fade( struct Image *input_img, struct Image *output_img ) {
             uint32_t b = get_b(input_pixel);
             uint32_t a = get_a(input_pixel);
 
+            //computes fade constant values based on location and total picture size
             int64_t tr = gradient(y, height);
             int64_t tc = gradient(x, width);
 
