@@ -44,6 +44,7 @@ int64_t gradient( int64_t x, int64_t max ) {
   return 1000000 - ((tmp - 1000) * (tmp - 1000));
 }
 
+
 // Convert input pixels to grayscale.
 // This transformation always succeeds.
 //
@@ -216,25 +217,39 @@ int imgproc_kaleidoscope( struct Image *input_img, struct Image *output_img ) {
   if (input_height != input_width) {
     return 0;
   }
-  int32_t wedge_length = input_width/2;
-  int32_t l = input_height - 1;
+  int32_t odd_factor = 0;
+  if (input_width % 2 == 1) {
+    odd_factor = 1;
+  }
+  
+  int32_t wedge_length = (input_width + odd_factor)/2;
+  int32_t l = wedge_length*2;
+  int32_t temp_result[l][l];
+  
 
   // TODO
   for (int32_t y = 0; y < wedge_length; y++) {
     for (int32_t x = y; x < wedge_length; x++) {
       uint32_t input_pixel = input_img->data[compute_index(input_img, x, y)];
-
       uint32_t output_pixel = input_pixel;
-      output_img->data[compute_index(output_img, x, y)] = output_pixel;
-      output_img->data[compute_index(output_img, l - x, y)] = output_pixel;
-      output_img->data[compute_index(output_img, l - y, x)] = output_pixel;
-      output_img->data[compute_index(output_img, l - y, l - x)] = output_pixel;
 
-      output_img->data[compute_index(output_img, y, x)] = output_pixel;
-      output_img->data[compute_index(output_img, y, l - x)] = output_pixel;
-      output_img->data[compute_index(output_img, x, l - y)] = output_pixel;
-      output_img->data[compute_index(output_img, l - x, l - y)] = output_pixel;
-      
+      temp_result[x][y] = output_pixel;
+      temp_result[y][x] = output_pixel;
+
+      temp_result[l-x-1][y] = output_pixel;
+      temp_result[y][l-x-1] = output_pixel;
+
+      temp_result[x][l-y-1] = output_pixel;
+      temp_result[l-y-1][x] = output_pixel;
+
+      temp_result[l-x-1][l-y-1] = output_pixel;
+      temp_result[l-y-1][l-x-1] = output_pixel;
+    }
+  }
+
+  for (int32_t x = 0; x < output_img->width; x++) {
+    for (int32_t y = 0; y < output_img->height; y++) {
+      output_img->data[compute_index(output_img, x, y)] = temp_result[x][y];
     }
   }
 
