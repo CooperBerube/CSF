@@ -15,6 +15,59 @@
  * them visible to the test code.
  */
 
+	.globl get_r
+get_r:
+    movl    %edi, %eax  /* Move the value in %edi to %eax */
+    shrl    $24, %eax   /* Shift %eax right by 24 bits */
+    andl    $0xFF, %eax /* lowest 8 bits */
+    ret
+
+	.globl get_g
+get_g:
+    movl    %edi, %eax      /* Move the value in %edi to %eax */
+    shrl    $16, %eax       /* Shift %eax right by 16 bits */
+    andl    $0xFF, %eax     /* lowest 8 bits */
+    ret                     /* Return the green component */
+
+	.globl get_b
+get_b:
+    movl    %edi, %eax      /* Move the value in %edi to %eax */
+    shrl    $8, %eax        /* Shift %eax right by 8 bits */
+    andl    $0xFF, %eax     /* lowest 8 bits */
+    ret                     /* Return the blue component */
+
+	.globl get_a
+get_a:
+    movl    %edi, %eax      /* Move the value in %edi to %eax */
+    andl    $0xFF, %eax     /* lowest 8 bits */
+    ret                     /* Return the alpha component */
+
+    .globl make_pixel
+make_pixel:
+    shl $24, %edi       /* Shift r left by 24 bits to occupy bits 24-31 */
+    shl $16, %esi       /* Shift g left by 16 bits to occupy bits 16-23 */
+    shl $8, %edx        /* Shift b left by 8 bits to occupy bits 8-15 */
+    or %esi, %edi       /* Combine g into r */
+    or %edx, %edi       /* Combine b into rg */
+    or %ecx, %edi       /* Combine a into rgb */
+    mov %edi, %eax      /* Move the final result into return register eax */
+    ret                 /* Return */
+
+.globl compute_index
+compute_index:
+    movl 8(%rdi), %eax
+    imull %edx, %eax
+    addl %esi, %eax
+    ret
+
+.globl to_grayscale
+to_grayscale:
+    ret /* Return grayscale pixel */
+
+.globl gradient
+gradient:
+    ret /* Return gradient */
+
 /*
  * Implementations of API functions
  */
