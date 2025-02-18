@@ -62,7 +62,49 @@ compute_index:
 
 .globl to_grayscale
 to_grayscale:
-    ret /* Return grayscale pixel */
+    pushq   %rbp                /* Save base pointer */
+    movq    %rsp, %rbp          /* Set base pointer to stack pointer */
+
+    movl    %edi, %eax          /* Move the pixel value to %eax */
+    call    get_r               /* Get the red component */
+    movl    %eax, %ebx          /* Save red component in %ebx */
+
+    movl    %edi, %eax          /* Move the pixel value to %eax */
+    call    get_g               /* Get the green component */
+    movl    %eax, %ecx          /* Save green component in %ecx */
+
+    movl    %edi, %eax          /* Move the pixel value to %eax */
+    call    get_b               /* Get the blue component */
+    movl    %eax, %edx          /* Save blue component in %edx */
+
+    movl    %edi, %eax          /* Move the pixel value to %eax */
+    call    get_a               /* Get the alpha component */
+    movl    %eax, %esi          /* Save alpha component in %esi */
+
+    movl    %ebx, %eax          /* Move red component to %eax */
+    imull   $79, %eax           /* Multiply red component by 79 */
+    movl    %eax, %ebx          /* Save result in %ebx */
+
+    movl    %ecx, %eax          /* Move green component to %eax */
+    imull   $128, %eax          /* Multiply green component by 128 */
+    addl    %eax, %ebx          /* Add to the result in %ebx */
+
+    movl    %edx, %eax          /* Move blue component to %eax */
+    imull   $49, %eax           /* Multiply blue component by 49 */
+    addl    %eax, %ebx          /* Add to the result in %ebx */
+
+    shrl    $8, %ebx            /* Shift right by 8 bits to divide by 256 */
+
+    movl    %ebx, %edi          /* Move the grayscale value to %edi */
+    movl    %ebx, %esi          /* Move the grayscale value to %esi */
+    movl    %ebx, %edx          /* Move the grayscale value to %edx */
+    movl    %esi, %ecx          /* Move the alpha value to %ecx */
+
+    call    make_pixel          /* Call make_pixel to create the grayscale pixel */
+
+    movq    %rbp, %rsp          /* Restore stack pointer */
+    popq    %rbp                /* Restore base pointer */
+    ret                         /* Return the grayscale pixel */
 
 .globl gradient
 gradient:
