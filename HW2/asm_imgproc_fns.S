@@ -108,7 +108,32 @@ to_grayscale:
 
 .globl gradient
 gradient:
-    ret /* Return gradient */
+    pushq   %rbp                /* Save base pointer */
+    movq    %rsp, %rbp          /* Set base pointer to stack pointer */
+
+    movq    %rdi, %rax          /* Move x to %rax */
+    imulq   $2000000000, %rax   /* Multiply x by 2000000000 */
+    cqo                         /* Sign extend %rax to %rdx:%rax */
+    idivq   %rsi                /* Divide by max, result in %rax */
+
+    movq    $1000000, %rdx      /* Move 1000000 to %rdx */
+    imulq   %rdx, %rax          /* Multiply result by 1000000 */
+    movq    %rax, %rbx          /* Move result to %rbx */
+
+    subq    $1000, %rbx         /* Subtract 1000 from result */
+    imulq   %rbx, %rbx          /* Square the result */
+    movq    $1000000, %rax      /* Move 1000000 to %rax */
+    subq    %rbx, %rax          /* Subtract squared result from 1000000 */
+
+    /* Ensure the result is positive */
+    testq   %rax, %rax          /* Test if the result is negative */
+    jns     .L1                 /* If not negative, skip next instruction */
+    negq    %rax                /* Negate the result to make it positive */
+
+.L1:
+    movq    %rbp, %rsp          /* Restore stack pointer */
+    popq    %rbp                /* Restore base pointer */
+    ret                         /* Return the result */
 
 /*
  * Implementations of API functions
