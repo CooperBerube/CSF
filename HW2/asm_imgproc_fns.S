@@ -180,12 +180,11 @@ imgproc_rgb:
     movl    $0, %r10d               /* Set r10d and r11d to 0 for incrementing */
     movl    $0, %r11d               
 
-    movl    IMAGE_WIDTH_OFFSET(%rbx), %r12d     /* Gets W and H and puts in r12d and r13d */
-    movl    IMAGE_HEIGHT_OFFSET(%rbx), %r13d    
-    movq    IMAGE_DATA_OFFSET(%rbx), %r14       /* Gets data for two pics and puts in r14 and r15 */
-    movq    IMAGE_DATA_OFFSET(%rcx), %r15
+    movl    IMAGE_WIDTH_OFFSET(%rdi), %r12d     /* Gets W and H and puts in r12d and r13d */
+    movl    IMAGE_HEIGHT_OFFSET(%rdi), %r13d    
+    movq    IMAGE_DATA_OFFSET(%rdi), %r14       /* Gets data for two pics and puts in r14 and r15 */
+    movq    IMAGE_DATA_OFFSET(%rsi), %r15
 
-    subq $16, %rsp
 
 .LrgbOuterLoop:
     cmpl    %r13d, %r11d            /* Compare r13d to r11d */
@@ -194,69 +193,110 @@ imgproc_rgb:
         cmpl    %r12d, %r10d            /* Compare r12d to r10d */
         jge     .LrgbLoopInnerDone
 
-        movl    (%r14,%r10,4), %edi     /* The current pixel goes into %edi for function call */
-        call    get_r                   /* Get r value */
-        movq    %rax, (%rsp)              /* Save return in r8d */
+        /*movl    (%r14,%r10,4), %edi     /* The current pixel goes into %edi for function call */
+        /*call    get_r                   /* Get r value */
+        /*movq    %rax, (%rsp)              /* Save return in r8d */
 
-        movl    (%r14,%r10,4), %edi     /* The current pixel goes into %edi for function call */
-        call    get_g                   /* Get g value */
-        movq    %rax, 4(%rsp)              /* Save return in r8 */
+        /*movl    (%r14,%r10,4), %edi     /* The current pixel goes into %edi for function call */
+        /*call    get_g                   /* Get g value */
+        /*movq    %rax, 4(%rsp)              /* Save return in r8 */
 
-        movl    (%r14,%r10,4), %edi     /* The current pixel goes into %edi for function call */
-        call    get_b                   /* Get b value */
-        movq    %rax, 8(%rsp)             /* Save return in r8 */    
+        /*movl    (%r14,%r10,4), %edi     /* The current pixel goes into %edi for function call */
+        /*call    get_b                   /* Get b value */
+        /*movq    %rax, 8(%rsp)             /* Save return in r8 */    
 
-        movl    (%r14,%r10,4), %edi     /* The current pixel goes into %edi for function call */
-        call    get_a                   /* Get a value */
-        movq    %rax, 12(%rsp)          /* Save return in r8 */    
+        /*movl    (%r14,%r10,4), %edi     /* The current pixel goes into %edi for function call */
+        /*call    get_a                   /* Get a value */
+        /*movq    %rax, 12(%rsp)          /* Save return in r8 */    
 
 
         /* NORMAL */
 
-
-        movq    (%rsp), %rdi              /* Put ebx into function call register*/
-        movq    4(%rsp), %rsi
-        movq    8(%rsp), %rdx
-        movq    12(%rsp), %rcx
-
-        call    make_pixel 
-
-        movl    %eax, %edi              /* Put pixel into %edi */
         
-        movl    %r11d, %r9d             /* Put outer inc into %r9d */
-        imull   $2, %r9d                /* Multiply by 2 for double width condition */
-        imull   %r12d, %r9d             /* Multiply width by inc and put into %r9d */
-        addl    %r10d, %r9d             /* Add inner inc to get specific position */
-        movl    (%r14,%r10,4), %edi       /* Put into correct location in data bank for output */
-        movl    %edi, (%r15, %r9)
+        movq    %r11, %r8
+        imulq   %r12, %r8
+        addq    %r10, %r8
+        imulq   $4, %r8
+        movq    (%r14, %r8), %r8
 
+        movq    %r11, %r9
+        imulq   %r12, %r9
+        imulq   $2, %r9
+        addq    %r10, %r9
+        imulq   $4, %r9
+        movq    %r8, (%r15,%r9)
+
+        
 
         /* RED */
 
+        movq    %r8, %rdi           /* The current pixel goes into %edi for function call */
+        call    get_a               /* Get a value */
+        movq    %rax, %rcx          /* Save return in rcx for future func call */   
 
-        /*movl    %ebx, %edi            /* Put ebx into function call registers*/
-        /*movl    $0, %esi              /* 0 to g */
-        /*movl    $0, %edx              /* 0 to b */
-        /*movl    12(%ebx), %ecx        /* a value */
 
-        /*call    make_pixel            /* Make the Pixel */
+        movq    %r8, %rdi           /* The current pixel goes into %edi for function call */
+        call    get_r               /* Get r value */
+        movq    %rax, %rdi          /* Save return in %rdi */
 
-        /*movl    %eax, %edi            /* Put pixel into %edi */
+        movq    $0, %rsi            /* Set g abd b components to 0 */
+        movq    $0, %rdx
+
+        call    make_pixel          /* Create the pixel */
         
-        /*movl    %r11d, (,%r9d,2)           /* Put outer inc into %r9d */
-        /*imull   $2, %r9d              /* Multiply by w for double width condition */
-        /*imull   %r12d, %r9d           /* Multiply width by inc and put into %r9d */
-        /*addl    %r12d, %r9d           /* Add width to get red location
-        /*addl    %r10d, %r9d           /* Add inner inc to get specific position */
-        /*movl    %edi, (%r15, %r9)     /* Put into correct location in data bank for output */
+        movq    %r11, %r9           /* Put Outer increment into %r9 for y location*/
+        imulq   %r12, %r9           /* Multiply by width */
+        imulq   $2, %r9             /* Multiply by 2 for double size */
+        addq    %r10, %r9           /* Add inner loop increment for x location */
+        addq    %r12, %r9           /* Add width for red quadrant specific location */
+        imulq   $4, %r9             /* Multiply by four for byte size */
+        movq    %rax, (%r15,%r9)    /* Put pixel made from make_pixel into spot */
 
 
         /* Green */
 
 
+        movq    %r8, %rdi           /* The current pixel goes into %edi for function call */
+        call    get_g               /* Get r value */
+        movq    %rax, %rsi          /* Save return in %rdi */
 
+        movq    $0, %rdi            /* Set g abd b components to 0 */
+        movq    $0, %rdx
+
+        call    make_pixel          /* Create the pixel */
+        
+        movq    %r11, %r9           /* Put Outer increment into %r9 for y location*/
+        addq    %r13, %r9
+        imulq   %r12, %r9           /* Multiply by width */
+        imulq   $2, %r9             /* Multiply by 2 for double size */
+        addq    %r10, %r9           /* Add inner loop increment for x location */
+        imulq   $4, %r9             /* Multiply by four for byte size */
+        movq    %rax, (%r15,%r9)    /* Put pixel made from make_pixel into spot */
+        
 
         /* Blue */
+
+
+        movq    %r8, %rdi           /* The current pixel goes into %edi for function call */
+        call    get_b               /* Get r value */
+        movq    %rax, %rdx          /* Save return in %rdi */
+
+        movq    $0, %rdi            /* Set r and g components to 0 */
+        movq    $0, %rsi
+
+        call    make_pixel          /* Create the pixel */
+        
+        movq    %r11, %r9           /* Put Outer increment into %r9 for y location*/
+        addq    %r13, %r9           /* Bottom quadrant height condition */
+        imulq   %r12, %r9           /* Multiply by width */
+        imulq   $2, %r9             /* Multiply by 2 for double size */
+        addq    %r10, %r9           /* Add inner loop increment for x location */
+        addq    %r12, %r9           /* Add width for red quadrant specific location */
+        imulq   $4, %r9             /* Multiply by four for byte size */
+        movq    %rax, (%r15,%r9)    /* Put pixel made from make_pixel into spot */
+
+
+        /* Loop finishing step */
 
         incl    %r10d
         jmp     .LrgbInnerLoop
@@ -265,7 +305,6 @@ imgproc_rgb:
         movl    $0, %r10d               /* Set r10d to 0 for incrementing next time*/
         jmp     .LrgbOuterLoop
 .LrgbLoopOuterDone:
-    addq $16, %rsp
     popq    %rbp
 
 	ret
@@ -304,15 +343,19 @@ imgproc_grayscale:
 
     movl    (%r12,%r10,4), %edi    /* The current pixel goes into %edi for function call */
 
+    movq    $0, %rax
+
     call    to_grayscale
+
     movq    %r8, %rdi
     movq    %r9, %rsi
-    
     movq    %rax, (%r13,%r10,4)     /* Move the result pixel into new data set of output struct */
 
     incl %r10d
     jmp .LpixelLoop
 .LpixelLoopDone:
+    movq    %r8, %rdi
+    movq    %r9, %rsi
     popq    %rbp
 	ret
 
