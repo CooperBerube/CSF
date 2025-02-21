@@ -186,7 +186,37 @@ imgproc_rgb:
 	.globl imgproc_grayscale
 imgproc_grayscale:
 	/* TODO: implement */
+    pushq   %rbp                    /* Save base pointer */
+    movq    %rsp, %rbp              /* Set base pointer to stack pointer */
+
+    movq    %rdi, %rbx              /* to preserve %rdi and %rsi over calls */
+    movq    %rsi, %rcx
+
+    movl    $0, %r10d               /* Set r10d to zero to use as a index pointer */
+
+    movl    IMAGE_WIDTH_OFFSET(%rbx), %r11d             /* Move width into r11d */
+    movl    IMAGE_HEIGHT_OFFSET(%rbx), %r12d            /* Move height into r12d */
+    movq    IMAGE_DATA_OFFSET(%rbx), %r13
+    movq    IMAGE_DATA_OFFSET(%rcx), %r15
+    imull   %r12d, %r11d                                /* Move the height times width into r11d to use as length of data */
+
+.LpixelLoop:
+    cmpl    %r11d, %r10d            /* Compare r11d to r10d */
+    jae .LpixelLoopDone             /* Jump if r10d is greater than r11d */
+
+    movl    (%r13, %r10,4), %edi    /* The current pixel goes into %edi for function call */
+
+    call    to_grayscale
+    
+    movl    %eax, (%r15,%r10,4)     /* Move the result pixel into new data set of output struct */
+
+    incl %r10d
+    jmp .LpixelLoop
+.LpixelLoopDone:
+    popq    %rbp
 	ret
+
+
 
 /*
  * Render a "faded" version of the input image.
