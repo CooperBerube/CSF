@@ -95,10 +95,12 @@ to_grayscale:
 
     shrl    $8, %ebx            /* Shift right by 8 bits to divide by 256 */
 
+    movl    %esi, %r8d
+
     movl    %ebx, %edi          /* Move the grayscale value to %edi */
     movl    %ebx, %esi          /* Move the grayscale value to %esi */
     movl    %ebx, %edx          /* Move the grayscale value to %edx */
-    movl    %esi, %ecx          /* Move the alpha value to %ecx */
+    movl    %r8d, %ecx          /* Move the alpha value to %ecx */
 
     call    make_pixel          /* Call make_pixel to create the grayscale pixel */
 
@@ -316,8 +318,6 @@ imgproc_grayscale:
     imull   IMAGE_HEIGHT_OFFSET(%rbx), %r11d           /* Move the height times width into r11d to use as length of data */
     movq    IMAGE_DATA_OFFSET(%rbx), %r12
     movq    IMAGE_DATA_OFFSET(%rcx), %r13
-    movq    %rdi, %r8
-    movq    %rsi, %r9
 
 .LpixelLoop:
     cmpl    %r11d, %r10d            /* Compare r11d to r10d */
@@ -329,15 +329,11 @@ imgproc_grayscale:
 
     call    to_grayscale
 
-    movq    %r8, %rdi
-    movq    %r9, %rsi
     movq    %rax, (%r13,%r10,4)     /* Move the result pixel into new data set of output struct */
 
     incl %r10d
     jmp .LpixelLoop
 .LpixelLoopDone:
-    movq    %r8, %rdi
-    movq    %r9, %rsi
     popq    %rbp
 	ret
 
