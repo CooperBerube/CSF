@@ -188,52 +188,35 @@ imgproc_rgb:
 
 .LrgbOuterLoop:
     cmpl    %r13d, %r11d            /* Compare r13d to r11d */
-    jge     .LrgbLoopOuterDone
+    jae     .LrgbLoopOuterDone
     .LrgbInnerLoop:
         cmpl    %r12d, %r10d            /* Compare r12d to r10d */
-        jge     .LrgbLoopInnerDone
-
-        /*movl    (%r14,%r10,4), %edi     /* The current pixel goes into %edi for function call */
-        /*call    get_r                   /* Get r value */
-        /*movq    %rax, (%rsp)              /* Save return in r8d */
-
-        /*movl    (%r14,%r10,4), %edi     /* The current pixel goes into %edi for function call */
-        /*call    get_g                   /* Get g value */
-        /*movq    %rax, 4(%rsp)              /* Save return in r8 */
-
-        /*movl    (%r14,%r10,4), %edi     /* The current pixel goes into %edi for function call */
-        /*call    get_b                   /* Get b value */
-        /*movq    %rax, 8(%rsp)             /* Save return in r8 */    
-
-        /*movl    (%r14,%r10,4), %edi     /* The current pixel goes into %edi for function call */
-        /*call    get_a                   /* Get a value */
-        /*movq    %rax, 12(%rsp)          /* Save return in r8 */    
+        jae     .LrgbLoopInnerDone
 
 
         /* NORMAL */
 
         
-        movq    %r11, %r8
-        imulq   %r12, %r8
-        addq    %r10, %r8
-        imulq   $4, %r8
-        movq    (%r14, %r8), %r8
+        movq    %r11, %r8           /* Puts the y or outer increment into %r8 */
+        imulq   %r12, %r8           /* Multiply the outerincrement by the total width to get to the point it is held in data */
+        addq    %r10, %r8           /* Add the current increment to it to find the column it is int */
+        imulq   $4, %r8             /* Multiply by four for space for memory */
+        movq    (%r14, %r8), %r8    /* Get the value from input picture and store it in r8 */
 
-        movq    %r11, %r9
-        imulq   %r12, %r9
-        imulq   $2, %r9
-        addq    %r10, %r9
-        imulq   $4, %r9
-        movq    %r8, (%r15,%r9)
+        movq    %r11, %r9           /* Put the y or outer increment into %r9 */
+        imulq   %r12, %r9           /* Multiply the outer increment by the width to go to memory location */
+        imulq   $2, %r9             /* Multiply by 2 since this is double width */
+        addq    %r10, %r9           /* Add r10 to get to column location */
+        imulq   $4, %r9             /* Multiply by four for space for memory */
+        movq    %r8, (%r15,%r9)     /* Take original memory location and put into new memory location */
 
-        
 
         /* RED */
+
 
         movq    %r8, %rdi           /* The current pixel goes into %edi for function call */
         call    get_a               /* Get a value */
         movq    %rax, %rcx          /* Save return in rcx for future func call */   
-
 
         movq    %r8, %rdi           /* The current pixel goes into %edi for function call */
         call    get_r               /* Get r value */
@@ -260,13 +243,13 @@ imgproc_rgb:
         call    get_g               /* Get r value */
         movq    %rax, %rsi          /* Save return in %rdi */
 
-        movq    $0, %rdi            /* Set g abd b components to 0 */
+        movq    $0, %rdi            /* Set r and b components to 0 */
         movq    $0, %rdx
 
         call    make_pixel          /* Create the pixel */
         
         movq    %r11, %r9           /* Put Outer increment into %r9 for y location*/
-        addq    %r13, %r9
+        addq    %r13, %r9           /* Add height to get quadrant specific to green */
         imulq   %r12, %r9           /* Multiply by width */
         imulq   $2, %r9             /* Multiply by 2 for double size */
         addq    %r10, %r9           /* Add inner loop increment for x location */
@@ -294,7 +277,6 @@ imgproc_rgb:
         addq    %r12, %r9           /* Add width for red quadrant specific location */
         imulq   $4, %r9             /* Multiply by four for byte size */
         movq    %rax, (%r15,%r9)    /* Put pixel made from make_pixel into spot */
-
 
         /* Loop finishing step */
 
