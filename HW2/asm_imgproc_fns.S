@@ -170,9 +170,8 @@ gradient:
  *          width and height twice the width/height of the
  *          input image)
  */
-	.globl imgproc_rgb
+.globl imgproc_rgb
 imgproc_rgb:
-	/* TODO: implement */
     pushq   %rbp                    /* Save base pointer */
     movq    %rsp, %rbp              /* Set base pointer to stack pointer */
 
@@ -203,29 +202,29 @@ imgproc_rgb:
         imulq   %r12, %r8           /* Multiply the outerincrement by the total width to get to the point it is held in data */
         addq    %r10, %r8           /* Add the current increment to it to find the column it is int */
         imulq   $4, %r8             /* Multiply by four for space for memory */
-        movq    (%r14, %r8), %r8    /* Get the value from input picture and store it in r8 */
+        movl    (%r14, %r8), %r8d   /* Get the value from input picture and store it in r8d */
 
         movq    %r11, %r9           /* Put the y or outer increment into %r9 */
         imulq   %r12, %r9           /* Multiply the outer increment by the width to go to memory location */
         imulq   $2, %r9             /* Multiply by 2 since this is double width */
         addq    %r10, %r9           /* Add r10 to get to column location */
         imulq   $4, %r9             /* Multiply by four for space for memory */
-        movq    %r8, (%r15,%r9)     /* Take original memory location and put into new memory location */
+        movl    %r8d, (%r15,%r9)    /* Take original memory location and put into new memory location */
 
 
         /* RED */
 
 
-        movq    %r8, %rdi           /* The current pixel goes into %edi for function call */
+        movl    %r8d, %edi          /* The current pixel goes into %edi for function call */
         call    get_a               /* Get a value */
-        movq    %rax, %rcx          /* Save return in rcx for future func call */   
+        movl    %eax, %ecx          /* Save return in ecx for future func call */   
 
-        movq    %r8, %rdi           /* The current pixel goes into %edi for function call */
+        movl    %r8d, %edi          /* The current pixel goes into %edi for function call */
         call    get_r               /* Get r value */
-        movq    %rax, %rdi          /* Save return in %rdi */
+        movl    %eax, %edi          /* Save return in %edi */
 
-        movq    $0, %rsi            /* Set g abd b components to 0 */
-        movq    $0, %rdx
+        movl    $0, %esi            /* Set g and b components to 0 */
+        movl    $0, %edx
 
         call    make_pixel          /* Create the pixel */
         
@@ -235,18 +234,18 @@ imgproc_rgb:
         addq    %r10, %r9           /* Add inner loop increment for x location */
         addq    %r12, %r9           /* Add width for red quadrant specific location */
         imulq   $4, %r9             /* Multiply by four for byte size */
-        movq    %rax, (%r15,%r9)    /* Put pixel made from make_pixel into spot */
+        movl    %eax, (%r15,%r9)    /* Put pixel made from make_pixel into spot */
 
 
         /* Green */
 
 
-        movq    %r8, %rdi           /* The current pixel goes into %edi for function call */
-        call    get_g               /* Get r value */
-        movq    %rax, %rsi          /* Save return in %rdi */
+        movl    %r8d, %edi          /* The current pixel goes into %edi for function call */
+        call    get_g               /* Get g value */
+        movl    %eax, %esi          /* Save return in %esi */
 
-        movq    $0, %rdi            /* Set r and b components to 0 */
-        movq    $0, %rdx
+        movl    $0, %edi            /* Set r and b components to 0 */
+        movl    $0, %edx
 
         call    make_pixel          /* Create the pixel */
         
@@ -256,18 +255,18 @@ imgproc_rgb:
         imulq   $2, %r9             /* Multiply by 2 for double size */
         addq    %r10, %r9           /* Add inner loop increment for x location */
         imulq   $4, %r9             /* Multiply by four for byte size */
-        movq    %rax, (%r15,%r9)    /* Put pixel made from make_pixel into spot */
+        movl    %eax, (%r15,%r9)    /* Put pixel made from make_pixel into spot */
         
 
         /* Blue */
 
 
-        movq    %r8, %rdi           /* The current pixel goes into %edi for function call */
-        call    get_b               /* Get r value */
-        movq    %rax, %rdx          /* Save return in %rdi */
+        movl    %r8d, %edi          /* The current pixel goes into %edi for function call */
+        call    get_b               /* Get b value */
+        movl    %eax, %edx          /* Save return in %edx */
 
-        movq    $0, %rdi            /* Set r and g components to 0 */
-        movq    $0, %rsi
+        movl    $0, %edi            /* Set r and g components to 0 */
+        movl    $0, %esi
 
         call    make_pixel          /* Create the pixel */
         
@@ -276,9 +275,9 @@ imgproc_rgb:
         imulq   %r12, %r9           /* Multiply by width */
         imulq   $2, %r9             /* Multiply by 2 for double size */
         addq    %r10, %r9           /* Add inner loop increment for x location */
-        addq    %r12, %r9           /* Add width for red quadrant specific location */
+        addq    %r12, %r9           /* Add width for blue quadrant specific location */
         imulq   $4, %r9             /* Multiply by four for byte size */
-        movq    %rax, (%r15,%r9)    /* Put pixel made from make_pixel into spot */
+        movl    %eax, (%r15,%r9)    /* Put pixel made from make_pixel into spot */
 
         /* Loop finishing step */
 
@@ -291,8 +290,7 @@ imgproc_rgb:
 .LrgbLoopOuterDone:
     popq    %rbp
 
-	ret
-
+    ret
 /*
  * void imgproc_grayscale( struct Image *input_img, struct Image *output_img );
  *

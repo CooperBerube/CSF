@@ -4,6 +4,8 @@ TODO: names of team members
 
 TODO: contributions of each team member
 
+MSI:
+
 Cooper Berube:
 - Unit Tests
 - Greyscale
@@ -14,3 +16,14 @@ Brendan Meixner:
 - Unit Tests
 - Kaleidoscope
 - Comments for clarity
+
+MSII:
+Cooper Berube:
+- Assembly helper functions
+
+Brendan Meixner:
+- Grayscale
+- Unit Tests
+
+Both:
+- RGB
