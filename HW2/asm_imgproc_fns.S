@@ -55,7 +55,7 @@ make_pixel:
 
 .globl compute_index
 compute_index:
-    movl 8(%rdi), %eax
+    movl IMAGE_WIDTH_OFFSET(%rdi), %eax
     imull %edx, %eax
     addl %esi, %eax
     ret
@@ -281,11 +281,11 @@ imgproc_rgb:
 
         /* Loop finishing step */
 
-        incl    %r10d
+        incl    %r10d               /* increment %r10 */
         jmp     .LrgbInnerLoop
     .LrgbLoopInnerDone:
-        incl    %r11d
-        movl    $0, %r10d               /* Set r10d to 0 for incrementing next time*/
+        incl    %r11d               /* increment %r11 */
+        movl    $0, %r10d           /* Set r10d to 0 for incrementing next time*/
         jmp     .LrgbOuterLoop
 .LrgbLoopOuterDone:
     popq    %rbp
@@ -313,8 +313,8 @@ imgproc_grayscale:
     movl    $0, %r10d               /* Set r10d to zero to use as a index pointer */
 
     movl    IMAGE_WIDTH_OFFSET(%rbx), %r11d             /* Move width into r11d */
-    imull   IMAGE_HEIGHT_OFFSET(%rbx), %r11d           /* Move the height times width into r11d to use as length of data */
-    movq    IMAGE_DATA_OFFSET(%rbx), %r12
+    imull   IMAGE_HEIGHT_OFFSET(%rbx), %r11d            /* Move the height times width into r11d to use as length of data */
+    movq    IMAGE_DATA_OFFSET(%rbx), %r12               /* Store input and ouput data */
     movq    IMAGE_DATA_OFFSET(%rcx), %r13
 
 .LpixelLoop:
