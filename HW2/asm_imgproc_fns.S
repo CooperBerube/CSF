@@ -110,32 +110,35 @@ to_grayscale:
 
 .globl gradient
 gradient:
-    pushq   %rbp                /* Save base pointer */
-    movq    %rsp, %rbp          /* Set base pointer to stack pointer */
+    /* TODO: fix this for working fade */
+    pushq %rbp                    /* Save base pointer */
+    movq %rsp, %rbp               /* Set base pointer to stack pointer */
+    pushq %rbx                    /* Save %rbx register */
+    pushq %r10                    /* Save %r10 register */
+    pushq %r11                    /* Save %r11 register */
 
-    movq    %rdi, %rax          /* Move x to %rax */
-    imulq   $2000000000, %rax   /* Multiply x by 2000000000 */
-    cqo                         /* Sign extend %rax to %rdx:%rax */
-    idivq   %rsi                /* Divide by max, result in %rax */
+    movq %rdi, %rbx               /* Move first argument (numerator) to %rbx */
+    movq %rsi, %r10               /* Move second argument (denominator) to %r10 */
+    movq $1000, %r11              /* Move constant 1000 to %r11 */
+    xorq %rax, %rax               /* Clear %rax register */
 
-    movq    $1000000, %rdx      /* Move 1000000 to %rdx */
-    imulq   %rdx, %rax          /* Multiply result by 1000000 */
-    movq    %rax, %rbx          /* Move result to %rbx */
+    movq $2000, %rax              /* Move constant 2000 to %rax */
+    imulq %rbx                    /* Multiply %rbx (numerator) by %rax */
+    idivq %r10                    /* Divide %rax by %r10 (denominator) */
 
-    subq    $1000, %rbx         /* Subtract 1000 from result */
-    imulq   %rbx, %rbx          /* Square the result */
-    movq    $1000000, %rax      /* Move 1000000 to %rax */
-    subq    %rbx, %rax          /* Subtract squared result from 1000000 */
+    subq %r11, %rax               /* Subtract 1000 (stored in %r11) from %rax */
+    movq %rax, %rdx               /* Move result to %rdx */
+    imulq %rdx, %rdx              /* Square %rdx */
+    movq $1000000, %rax           /* Move constant 1000000 to %rax */
+    subq %rdx, %rax               /* Subtract %rdx from %rax */
 
-    /* Ensure the result is positive */
-    testq   %rax, %rax          /* Test if the result is negative */
-    jns     .L1                 /* If not negative, skip next instruction */
-    negq    %rax                /* Negate the result to make it positive */
+    popq %r11                     /* Restore %r11 register */
+    popq %r10                     /* Restore %r10 register */
+    popq %rbx                     /* Restore %rbx register */
+    movq %rbp, %rsp               /* Restore stack pointer */
+    popq %rbp                     /* Restore base pointer */
 
-.L1:
-    movq    %rbp, %rsp          /* Restore stack pointer */
-    popq    %rbp                /* Restore base pointer */
-    ret                         /* Return the result */
+    ret                           /* Return from function */
 
 /*
  * Implementations of API functions
@@ -349,11 +352,133 @@ imgproc_grayscale:
  *   %rdi - pointer to the input Image
  *   %rsi - pointer to the output Image
  */
-	.globl imgproc_fade
+.globl imgproc_fade
 imgproc_fade:
-	/* TODO: implement */
+    pushq   %rbp                    // Save base pointer
+    movq    %rsp, %rbp              // Set base pointer to stack pointer
+    subq    $32, %rsp               // Allocate 32 bytes on the stack
+    pushq   %r15                    // Save %r15 register
+    pushq   %r14                    // Save %r14 register
+    pushq   %r13                    // Save %r13 register
+    pushq   %r12                    // Save %r12 register
+    pushq   %rbx                    // Save %rbx register
 
-	ret
+    // Check if input_img or output_img is NULL
+    testq   %rdi, %rdi              // Test if %rdi (input_img) is NULL
+    je      .Lfade_return           // If NULL, jump to .Lfade_return
+    testq   %rsi, %rsi              // Test if %rsi (output_img) is NULL
+    je      .Lfade_return           // If NULL, jump to .Lfade_return
+
+    // Load image dimensions and data pointers
+    movl    IMAGE_HEIGHT_OFFSET(%rdi), %r12d  // Load input_img->height into %r12d
+    movl    IMAGE_WIDTH_OFFSET(%rdi), %r13d   // Load input_img->width into %r13d
+    movq    IMAGE_DATA_OFFSET(%rdi), %r14     // Load input_img->data into %r14
+    movq    IMAGE_DATA_OFFSET(%rsi), %r15     // Load output_img->data into %r15
+
+    xorl    %r10d, %r10d            // Initialize row index %r10d to 0
+
+.Lfade_outer_loop:
+    cmpl    %r12d, %r10d            // Compare row index %r10d with height %r12d
+    je      .Lfade_outer_loop_done  // If equal, jump to .Lfade_outer_loop_done
+
+    xorl    %r11d, %r11d            // Initialize column index %r11d to 0
+
+.Lfade_inner_loop:
+    cmpl    %r13d, %r11d            // Compare column index %r11d with width %r13d
+    je      .Lfade_inner_loop_done  // If equal, jump to .Lfade_inner_loop_done
+
+    // Calculate the pixel index
+    movl    %r10d, %r9d             // Copy row index %r10d to %r9d
+    imull   %r13d, %r9d             // Multiply row index by width to get row offset
+    addl    %r11d, %r9d             // Add column index to get pixel index
+
+    // Load the pixel value
+    movl    (%r14, %r9, 4), %eax    // Load pixel value from input_img->data into %eax
+    movl    %eax, -4(%rbp)          // Store pixel value on the stack
+    movl    %r9d, -24(%rbp)         // Store pixel index on the stack
+
+    // Calculate the gradient for the row
+    movl    %r10d, %edi             // Move row index to %edi (first argument)
+    movl    %r12d, %esi             // Move height to %esi (second argument)
+    call    gradient                // Call gradient function
+    movq    %rax, -32(%rbp)         // Store gradient result on the stack
+
+    // Calculate the gradient for the column
+    movl    %r11d, %edi             // Move column index to %edi (first argument)
+    movl    %r13d, %esi             // Move width to %esi (second argument)
+    call    gradient                // Call gradient function
+    movq    %rax, %rbx              // Store gradient result in %rbx
+    imulq   -32(%rbp), %rbx         // Multiply row gradient by column gradient
+
+    // Extract and fade the red component
+    movl    -4(%rbp), %edi          // Load pixel value from the stack into %edi
+    call    get_r                   // Call get_r function to extract red component
+    imulq   %rbx, %rax              // Multiply red component by gradient product
+    movq    $1000000000000, %r8     // Load constant 1000000000000 into %r8
+    xorq    %rdx, %rdx              // Clear %rdx
+    divq    %r8                     // Divide by 1000000000000
+    movl    %eax, -8(%rbp)          // Store faded red component on the stack
+
+    // Extract and fade the green component
+    movl    -4(%rbp), %edi          // Load pixel value from the stack into %edi
+    call    get_g                   // Call get_g function to extract green component
+    imulq   %rbx, %rax              // Multiply green component by gradient product
+    xorq    %rdx, %rdx              // Clear %rdx
+    divq    %r8                     // Divide by 1000000000000
+    movl    %eax, -12(%rbp)         // Store faded green component on the stack
+
+    // Extract and fade the blue component
+    movl    -4(%rbp), %edi          // Load pixel value from the stack into %edi
+    call    get_b                   // Call get_b function to extract blue component
+    imulq   %rbx, %rax              // Multiply blue component by gradient product
+    xorq    %rdx, %rdx              // Clear %rdx
+    divq    %r8                     // Divide by 1000000000000
+    movl    %eax, -16(%rbp)         // Store faded blue component on the stack
+
+    // Extract the alpha component
+    movl    -4(%rbp), %edi          // Load pixel value from the stack into %edi
+    call    get_a                   // Call get_a function to extract alpha component
+    movl    %eax, -20(%rbp)         // Store alpha component on the stack
+
+    // Combine the faded components into a new pixel
+    movl    -8(%rbp), %edi          // Load faded red component into %edi
+    movl    -12(%rbp), %esi         // Load faded green component into %esi
+    movl    -16(%rbp), %edx         // Load faded blue component into %edx
+    movl    -20(%rbp), %ecx         // Load alpha component into %ecx
+    call    make_pixel              // Call make_pixel function
+
+    // Store the new pixel value
+    movl    %eax, %ebx              // Move new pixel value to %ebx
+    movl    -24(%rbp), %r9d         // Load pixel index from the stack into %r9d
+    movl    %ebx, (%r15, %r9, 4)    // Store new pixel value in output_img->data
+
+    // Increment the column index
+    incl    %r11d                   // Increment column index
+    jmp     .Lfade_inner_loop       // Jump to the start of the inner loop
+
+.Lfade_inner_loop_done:
+    incl    %r10d                   // Increment row index
+    jmp     .Lfade_outer_loop       // Jump to the start of the outer loop
+
+.Lfade_outer_loop_done:
+    popq    %rbx                    // Restore %rbx register
+    popq    %r12                    // Restore %r12 register
+    popq    %r13                    // Restore %r13 register
+    popq    %r14                    // Restore %r14 register
+    popq    %r15                    // Restore %r15 register
+    addq    $32, %rsp               // Deallocate 32 bytes from the stack
+    popq    %rbp                    // Restore base pointer
+    ret                             // Return from function
+
+.Lfade_return:
+    popq    %rbx                    // Restore %rbx register
+    popq    %r12                    // Restore %r12 register
+    popq    %r13                    // Restore %r13 register
+    popq    %r14                    // Restore %r14 register
+    popq    %r15                    // Restore %r15 register
+    addq    $32, %rsp               // Deallocate 32 bytes from the stack
+    popq    %rbp                    // Restore base pointer
+    ret                             // Return from function
 
 /*
  * Render a "kaleidoscope" transformation of input_img in output_img.

@@ -27,3 +27,10 @@ Brendan Meixner:
 
 Both:
 - RGB
+
+MSIII:
+Cooper Berube:
+- Fade
+
+Brendan Meixner:
+- Kaleidoscope
