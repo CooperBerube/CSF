@@ -533,13 +533,32 @@ imgproc_kaleidoscope:
     movl    $0, %r10d               /* Set r10d and r11d to 0 for incrementing */
     movl    $0, %r11d               
 
+
     movl    IMAGE_WIDTH_OFFSET(%rdi), %r12d     /* Gets W and H and puts in r12d and r13d */
     shr    $1, %r12
     movl    IMAGE_WIDTH_OFFSET(%rdi), %edx     /* Gets W and H and puts in r12d and r13d */
+    movl    IMAGE_HEIGHT_OFFSET(%rdi), %r13d  
 
-    movl    IMAGE_HEIGHT_OFFSET(%rdi), %r13d    
     movq    IMAGE_DATA_OFFSET(%rdi), %r14       /* Gets data for two pics and puts in r14 and r15 */
     movq    IMAGE_DATA_OFFSET(%rsi), %r15
+
+    cmpl    %edx, %r13d
+    jz      .Lcontinue
+    movl    $0, %eax
+    ret
+    .Lcontinue:
+
+    movq    $0, %rdx
+    movl    %r13d, %eax
+    movl    $2, %ecx
+    divq    %rcx
+    cmpq    $1, %rdx
+    jz      .Lodd
+
+    movl    IMAGE_WIDTH_OFFSET(%rdi), %edx     /* Gets W and H and puts in r12d and r13d */
+    movl    IMAGE_HEIGHT_OFFSET(%rdi), %r13d  
+
+    
 
 
 .LkaleidoscopeOuterLoop:
@@ -672,6 +691,172 @@ imgproc_kaleidoscope:
         incl    %r11d               /* increment %r11 */
         jmp     .LkaleidoscopeOuterLoop
 .LkaleidoscopeLoopOuterDone:
+    movl    $1, %eax
+    popq    %rbp
+	ret
+
+.Lodd:
+
+    movl    IMAGE_WIDTH_OFFSET(%rdi), %edx     /* Gets W and H and puts in r12d and r13d */
+    movl    IMAGE_HEIGHT_OFFSET(%rdi), %r13d  
+    movq    $0, %rdi
+
+.LkaleidoscopeOddOuterLoop:
+    cmpl    %r12d, %r11d            /* Compare r13d to r11d */
+    jae     .LkaleidoscopeLoopOddOuterDone
+    movl %r11d, %r10d               /* Move y into x to get proper part of input image */
+    .LkaleidoscopeOddInnerLoop:
+        cmpl    %r12d, %r10d            /* Compare r12d to r10d */
+        jae     .LkaleidoscopeLoopOddInnerDone
+
+        /* Get picture index */
+
+        movl    %edx, %r8d           /* Puts the y or outer increment into %r8 */
+        imulq   %r11, %r8           /* Multiply the outerincrement by the total width to get to the point it is held in data */
+        
+        addq    %r10, %r8           /* Add the current increment to it to find the column it is int */
+        imulq   $4, %r8             /* Multiply by four for space for memory */
+        movl    (%r14, %r8), %r8d   /* Get the value from input picture and store it in r8d */
+
+        /* top Left top*/
+
+        movl    %edx, %r9d           /* Put the y or outer increment into %r9 */
+        imulq   %r11, %r9           /* Multiply the outer increment by the width to go to memory location */
+        
+        addq    %r10, %r9           /* Add r10 to get to column location */
+        imulq   $4, %r9             /* Multiply by four for space for memory */
+        movl    %r8d, (%r15,%r9)    /* Take original memory location and put into new memory location */
+
+        /* top Left bottom*/
+
+        movl    %edx, %r9d           /* Put the width into %r9 */
+        imulq   %r10, %r9           /* Multiply the inner increment by the width to go to memory location */
+        
+        addq    %r11, %r9           /* Add r11 to get to column location */
+        imulq   $4, %r9             /* Multiply by four for space for memory */
+        movl    %r8d, (%r15,%r9)    /* Take original memory location and put into new memory location */
+
+        /* bottom Left top */ 
+
+        
+        movl    %edx, %ecx
+        subl    $1, %ecx
+        subl    %r10d, %ecx
+
+        movl    %edx, %r9d           /* Put the width into %r9 */
+        imulq   %rcx, %r9           /* Multiply the inner increment by the width to go to memory location */
+        
+        addq    %r11, %r9           /* Add r10 to get to column location */
+        imulq   $4, %r9             /* Multiply by four for space for memory */
+        movl    %r8d, (%r15,%r9)    /* Take original memory location and put into new memory location */
+
+        /* bottom Left bottom */
+
+        cmpl    %r11d, %edi
+        jz      .LloopFinishingSteps
+
+        cmpl    %r10d, %edi
+        jz      .LloopFinishingSteps
+        
+        movl    %edx, %ecx
+        subl    $1, %ecx
+        subl    %r11d, %ecx
+
+        movl    %edx, %r9d
+        imulq   %rcx, %r9           /* Multiply the inner increment by the width to go to memory location */
+        
+        addq    %r10, %r9           /* Add r10 to get to column location */
+        imulq   $4, %r9             /* Multiply by four for space for memory */
+        movl    %r8d, (%r15,%r9)    /* Take original memory location and put into new memory location */
+
+        /* top right top */
+
+        movl    %edx, %ecx
+        subl    $1, %ecx
+        subl    %r10d, %ecx
+
+        movl    %edx, %r9d           /* Put the y or outer increment into %r9 */
+        imulq   %r11, %r9           /* Multiply the outer increment by the width to go to memory location */
+
+        addq    %rcx, %r9           /* Add r10 to get to column location */
+        imulq   $4, %r9             /* Multiply by four for space for memory */
+        movl    %r8d, (%r15,%r9)    /* Take original memory location and put into new memory location */
+
+        /* top right bottom */
+
+        cmpl    %r11d, %edi
+        jz      .LloopFinishingSteps
+
+        cmpl    %r10d, %edi
+        jz      .LloopFinishingSteps
+
+        movl    %edx, %ecx
+        subl    $1, %ecx
+        subl    %r11d, %ecx
+
+        movl    %edx, %r9d           /* Put the y or outer increment into %r9 */
+        imulq   %r10, %r9           /* Multiply the outer increment by the width to go to memory location */
+
+        addq    %rcx, %r9           /* Add r10 to get to column location */
+        imulq   $4, %r9             /* Multiply by four for space for memory */
+        movl    %r8d, (%r15,%r9)    /* Take original memory location and put into new memory location */
+
+        /* bottom right top */
+
+        cmpl    %r11d, %edi
+        jz      .LloopFinishingSteps
+
+        cmpl    %r10d, %edi
+        jz      .LloopFinishingSteps
+
+        movl    %edx, %ecx
+        subl    $1, %ecx
+        subl    %r11d, %ecx
+
+        movl    %edx, %ebx
+        subl    $1, %ebx
+        subl    %r10d, %ebx
+
+        movl    %edx, %r9d           /* Put the y or outer increment into %r9 */
+        imulq   %rbx, %r9           /* Multiply the outer increment by the height to go to memory location */
+        
+        addq    %rcx, %r9           /* Add r10 to get to column location */
+        imulq   $4, %r9             /* Multiply by four for space for memory */
+        movl    %r8d, (%r15,%r9)    /* Take original memory location and put into new memory location */
+
+        /* bottom right bottom */
+
+        cmpl    %r11d, %edi
+        jz      .LloopFinishingSteps
+
+        cmpl    %r10d, %edi
+        jz      .LloopFinishingSteps
+
+        movl    %edx, %ecx
+        subl    $1, %ecx
+        subl    %r10d, %ecx
+
+        movl    %edx, %ebx
+        subl    $1, %ebx
+        subl    %r11d, %ebx
+
+        movl    %edx, %r9d           /* Put the y or outer increment into %r9 */
+        imulq   %rbx, %r9           /* Multiply the outer increment by the height to go to memory location */
+        
+        addq    %rcx, %r9           /* Add r10 to get to column location */
+        imulq   $4, %r9             /* Multiply by four for space for memory */
+        movl    %r8d, (%r15,%r9)    /* Take original memory location and put into new memory location */
+
+        /* Loop finishing step */
+        .LloopFinishingSteps:
+
+        incl    %r10d               /* increment %r10 */
+        jmp     .LkaleidoscopeOddInnerLoop
+    .LkaleidoscopeLoopOddInnerDone:
+        incl    %r11d               /* increment %r11 */
+        jmp     .LkaleidoscopeOddOuterLoop
+.LkaleidoscopeLoopOddOuterDone:
+    movl    $1, %eax
     popq    %rbp
 	ret
 
