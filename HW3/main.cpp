@@ -4,6 +4,7 @@
 #include <cmath>
 #include <string>
 #include <cstring>
+#include <sstream>
 
 using std::string;
 
@@ -80,8 +81,30 @@ int main( int argc, char **argv ) {
   string line;
 
   while (std::getline(std::cin, line)) {
-    // TODO: Implement
+    std::istringstream iss(line);
+    std::vector<std::string> wordVector(3);             
+      for (auto& word : wordVector) {                   
+        iss >> word;
+      }
+
+      std::uint32_t address = std::stoul(wordVector[1], nullptr, 16); 
+      unsigned arg1 = log2(cache.byteCount);              
+      unsigned arg2 = log2(cache.setCount);            
+
+      if (wordVector[0] == "l") { 
+        cache.loadAddress(address, arg1, arg2);         
+      } else {    
+        cache.storeAddress(address, arg1, arg2);    
+      }
   } 
 
+  std::cout << "Total loads: " << cache.loads << std::endl;
+  std::cout << "Total stores: " << cache.stores << std::endl;
+  std::cout << "Load hits: " << cache.loadHits << std::endl;
+  std::cout << "Load misses: " << cache.loadMisses << std::endl;
+  std::cout << "Store hits: " << cache.storeHits << std::endl;
+  std::cout << "Store misses: " << cache.storeMisses << std::endl;
+  std::cout << "Total cycles: " << cache.totalCycles << std::endl;
+  
   return 0;
 }
