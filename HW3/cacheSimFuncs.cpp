@@ -3,9 +3,9 @@
 Cache::Cache(char* args[]) {
     setCount = std::stoi(args[1]);
     blockCount = std::stoi(args[2]);
-    isWriteAllocate = (std::string(args[3]) == "write-allocate");
-    isWriteThrough = (std::string(args[4]) == "write-through"); // if false, then it's write-back
-    isLRU = (std::string(args[5]) == "lru");
+    isWriteAllocate = (std::string(args[4]) == "write-allocate");
+    isWriteThrough = (std::string(args[5]) == "write-through"); // if false, then it's write-back
+    isLRU = (std::string(args[6]) == "lru");
 
     // Initialize cache sets
     sets.resize(setCount);
@@ -21,10 +21,34 @@ unsigned int Cache::getIndex(std::uint32_t address, unsigned byteOffsetBits) {
 
 void Cache::loadAddress(std::uint32_t address, unsigned byteOffsetBits, unsigned indexBits) {
     // Implement load operation
+    if (isLRU) {
+        if (isWriteAllocate) {
+
+        } else {
+
+        }
+        if (isWriteThrough) {
+
+        } else {
+
+        }
+    }
 }
 
 void Cache::storeAddress(std::uint32_t address, unsigned byteOffsetBits, unsigned indexBits) {
     // Implement store operation
+    if (isLRU) {
+        if (isWriteAllocate) {
+
+        } else {
+
+        }
+        if (isWriteThrough) {
+
+        } else {
+            
+        }
+    }
 }
 
 void Cache::evict(unsigned int index, unsigned int tag) {
