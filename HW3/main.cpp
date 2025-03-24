@@ -51,5 +51,10 @@ int main( int argc, char **argv ) {
     return 1;
   }
 
+  if (strcmp(argv[5], "write-back") == 0 || strcmp(argv[4], "no-write-allocate") == 0) {
+    std::cout << "write-back and no-write-allocate can't both be declared" << std::endl;
+    return 1;
+  }
+
   return 0;
 }
