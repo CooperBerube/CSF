@@ -36,8 +36,19 @@ int main( int argc, char **argv ) {
     return 1;
   }
 
-  if (strcmp(argv[1], "write-allocate")) {
-    
+  if (strcmp(argv[4], "write-allocate") != 0 || strcmp(argv[4], "no-write-allocate") != 0) {
+    std::cout << "fourth argument is write-allocate or no-write-allocate" << std::endl;
+    return 1;
+  }
+
+  if (strcmp(argv[5], "write-through") != 0 || strcmp(argv[5], "write-back") != 0) {
+    std::cout << "fifth argument needs to be write-through or write-back" << std::endl;
+    return 1;
+  }
+
+  if (strcmp(argv[6], "lru") != 0 || strcmp(argv[6], "fifo") != 0) {
+    std::cout << "sixth argument needs to be lru or fifo" << std::endl;
+    return 1;
   }
 
   return 0;
