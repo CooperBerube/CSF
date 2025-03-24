@@ -21,18 +21,9 @@ unsigned int Cache::getIndex(std::uint32_t address, unsigned byteOffsetBits) {
 
 void Cache::loadAddress(std::uint32_t address, unsigned byteOffsetBits, unsigned indexBits) {
     // Implement load operation
-    if (isLRU) {
-        if (isWriteAllocate) {
-
-        } else {
-
-        }
-        if (isWriteThrough) {
-
-        } else {
-
-        }
-    }
+    int currIndex = getIndex(address, byteOffsetBits);
+    int currTag = getTag(address, byteOffsetBits, currIndex);
+    
 }
 
 void Cache::storeAddress(std::uint32_t address, unsigned byteOffsetBits, unsigned indexBits) {
@@ -45,7 +36,7 @@ void Cache::storeAddress(std::uint32_t address, unsigned byteOffsetBits, unsigne
         }
         if (isWriteThrough) {
 
-        } else {
+        } else { //write back
             
         }
     }
