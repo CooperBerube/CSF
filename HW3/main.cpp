@@ -16,7 +16,7 @@ using std::string;
    *  Usage: ./csim <sets> <blocks> <block size> <write-allocate OR no-write-allocate>
    *               <write-through OR write-back> <lru OR fifo>
    *
-   *  Example: ./csim 16 4 64 write-allocate write-through lru
+   *  Example: ./csim 16 4 64 write-allocate write-through lru < input_file
   */
 
 int main( int argc, char **argv ) {
@@ -69,7 +69,7 @@ int main( int argc, char **argv ) {
     return 1;
   }
 
-  if (strcmp(argv[5], "write-back") == 0 || strcmp(argv[4], "no-write-allocate") == 0) {
+  if (strcmp(argv[5], "write-back") == 0 && strcmp(argv[4], "no-write-allocate") == 0) {
     std::cout << "write-back and no-write-allocate can't both be declared" << std::endl;
     return 1;
   }
