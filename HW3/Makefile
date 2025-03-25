@@ -2,7 +2,7 @@ CXX = g++
 CXXFLAGS = -g -Wall -pedantic -std=c++17
 
 # Add any additional source files here
-SRCS = main.cpp cacheSimFuncs.cpp cacheSimFuncs.h
+SRCS = main.cpp cacheSimFuncs.cpp
 OBJS = $(SRCS:.cpp=.o)
 TARGET = csim
 

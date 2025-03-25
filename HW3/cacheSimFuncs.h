@@ -5,19 +5,23 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <list>
 #include <cstdint>
 
 // Cache simulation functions and data structures
 // This header file defines the structures and functions used for simulating a cache memory system.
 
 class Block {
+    public:
     unsigned int tag;
     bool valid, dirty;
     unsigned int load_ts, access_ts;
 };
 
 class Set {
-    std::vector<Set> slots;
+    public:
+    std::map<unsigned, std::list<Block>::iterator> tags;
+    std::vector<Block> slots;
 };
 
 class Cache {
@@ -25,7 +29,7 @@ class Cache {
 
     Cache() = default; // Default constructor
     Cache(char* args[]);
-    std::vector<Cache> sets;
+    std::vector<Set> sets;
     
     unsigned int setCount;
     unsigned int blockCount;
