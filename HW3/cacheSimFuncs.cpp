@@ -4,6 +4,7 @@
 Cache::Cache(char* args[]) {
     setCount = std::stoi(args[1]);
     blockCount = std::stoi(args[2]);
+    byteCount = std::stoi(args[3]);
     isWriteAllocate = (std::string(args[4]) == "write-allocate");
     isWriteThrough = (std::string(args[5]) == "write-through"); // if false, then it's write-back
     isLRU = (std::string(args[6]) == "lru");
@@ -21,42 +22,35 @@ unsigned int Cache::getIndex(std::uint32_t address, unsigned byteOffsetBits) {
 }
 
 void Cache::loadAddress(std::uint32_t address, unsigned byteOffsetBits, unsigned indexBits) {
-    // Implement load operation
-
-    ++totalCycles;
-    ++loads;
 
     int currIndex = getIndex(address, byteOffsetBits);
-    int currTag = getTag(address, byteOffsetBits, currIndex);
+    int currTag = getTag(address, byteOffsetBits, indexBits);
 
-    if (sets[indexBits].tags.find(currTag) != sets[indexBits].tags.end()) {
+    if (sets[currIndex].tags.find(currTag) != sets[currIndex].tags.end()) {
         loadHits++;
-        if (isLRU) { 
+        if (isLRU) {
             evict(currIndex, currTag);
         }
-    } else { 
+    } else {
         loadMisses++;
-        addBlock(currIndex, currTag); 
+        addBlock(currIndex, currTag);
     }
-    
+
+    totalCycles++;
+    loads++;
 }
 
 void Cache::storeAddress(std::uint32_t address, unsigned byteOffsetBits, unsigned indexBits) {
-    // Implement store operation
-
-    ++totalCycles;
-    ++stores;
 
     int currIndex = getIndex(address, byteOffsetBits);
-    int currTag = getTag(address, byteOffsetBits, currIndex);
-
+    int currTag = getTag(address, byteOffsetBits, indexBits);
 
     if (sets[currIndex].tags.find(currTag) != sets[currIndex].tags.end()) {
         storeHits++;
         if (isWriteThrough) {
             ++totalCycles;
         } else {
-            sets[currIndex].slots[sets[currIndex].tags[currTag]->load_ts].dirty = true;
+            sets[currIndex].tags[currTag]->dirty = true;
         }
         if (isLRU) {
             evict(currIndex, currTag);
@@ -68,6 +62,8 @@ void Cache::storeAddress(std::uint32_t address, unsigned byteOffsetBits, unsigne
         }
     }
 
+    totalCycles++;
+    stores++;
 }
 
 void Cache::evict(unsigned int index, unsigned int tag) {
@@ -79,20 +75,25 @@ void Cache::evict(unsigned int index, unsigned int tag) {
     }
 }
 
-
 void Cache::addBlock(unsigned int index, unsigned int tag) {
     Set &s = sets[index];
-    if (s.tags.size() == blockCount) {
-        auto it = std::min_element(s.tags.begin(), s.tags.end(), 
-            [](const auto &a, const auto &b) { return a.second->access_ts < b.second->access_ts; });
-        s.tags.erase(it->first);
+
+    // Check if the slot is full
+    if (s.slots.size() == (size_t) blockCount) { // Slot is full
+        s.tags.erase(s.tags.find(s.slots.front().tag)); // Remove the evicted slot
+        if (s.slots.front().dirty) {
+            totalCycles += (byteCount / 4) * 100;
+        }
+        s.slots.pop_front(); // Evict the least recently used slot from the block
     }
-    Block b;
-    b.tag = tag;
-    b.valid = true;
-    b.dirty = false;
-    b.load_ts = totalCycles;
-    b.access_ts = totalCycles;
-    s.slots.push_back(b);
-    // s.tags[tag] = s.slots.end();
+
+    Block block;
+    block.tag = tag;
+    block.valid = true;
+    block.dirty = false;
+    block.load_ts = totalCycles;
+    block.access_ts = totalCycles;
+    s.slots.push_back(block);
+    s.tags[tag] = --s.slots.end();
+    totalCycles += (byteCount / 4) * 100;
 }

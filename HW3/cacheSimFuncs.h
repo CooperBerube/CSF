@@ -21,7 +21,7 @@ class Block {
 class Set {
     public:
     std::map<unsigned, std::list<Block>::iterator> tags;
-    std::vector<Block> slots;
+    std::list<Block> slots;
 };
 
 class Cache {
