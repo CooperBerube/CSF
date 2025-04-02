@@ -3,108 +3,128 @@
 #include <stdexcept>
 #include <cmath>
 #include <string>
-#include <cstring>
+#include <vector>
 #include <sstream>
 
-using std::string;
+using namespace std;
 
-  /*
-   *  This program simulates a cache memory system based on the parameters provided
-   *  as command line arguments. The user must specify the number of sets, blocks,
-   *  block size, write policy (write-allocate or no-write-allocate), 
-   *  write-through or write-back policy, and the replacement policy (LRU or FIFO).
-   *
-   *  Usage: ./csim <sets> <blocks> <block size> <write-allocate OR no-write-allocate>
-   *               <write-through OR write-back> <lru OR fifo>
-   *
-   *  Example: ./csim 16 4 64 write-allocate write-through lru < input_file
-  */
+/**
+ * Checks if a given value is a power of two.
+ * This is essential for cache configurations, as cache parameters
+ * (number of sets, blocks per set, and block size) must be powers of two.
+ *
+ * @param value Integer to check.
+ * @return True if value is a power of two, otherwise false.
+ */
+bool isPowerOfTwo(int value) {
+    return value > 0 && (value & (value - 1)) == 0;
+}
 
-int main( int argc, char **argv ) {
+/**
+ * Validates the command-line arguments for the cache simulator.
+ * Ensures that the correct number of arguments is provided and that
+ * the cache parameters meet the required constraints.
+ *
+ * @param argc Number of arguments.
+ * @param argv Array of argument strings.
+ * @throws invalid_argument If arguments are missing, incorrectly formatted,
+ *         or violate logical constraints.
+ */
+void validateArguments(int argc, char **argv) {
+    if (argc != 7) {
+        throw invalid_argument("Usage: ./csim <sets> <blocks> <block size> <write-allocate OR no-write-allocate> <write-through OR write-back> <lru OR fifo>");
+    }
 
-  // Validation for command line arguements
+    int cacheSets = stoi(argv[1]);  // Number of sets in the cache
+    int setBlocks = stoi(argv[2]);  // Number of blocks per set
+    int blockBytes = stoi(argv[3]); // Size of each block in bytes
 
-  if (argc != 7) {
-    std::cerr << "Usage: ./csim <sets> <blocks> <write-allocate OR no--write allocate> <write-through OR write-back> <lru OR fifo>" << std::endl;
-    return 1;
-  }
+    // Ensure the first three arguments are powers of two (as required for cache indexing)
+    if (!isPowerOfTwo(cacheSets) || !isPowerOfTwo(setBlocks) || !isPowerOfTwo(blockBytes)) {
+        throw invalid_argument("First three arguments must be powers of 2.");
+    }
 
-  int cacheSets;
-  int setBlocks;
-  int blockBytes;
+    string writeAllocate = argv[4];       // "write-allocate" or "no-write-allocate"
+    string writePolicy = argv[5];         // "write-through" or "write-back"
+    string replacementPolicy = argv[6];   // "lru" or "fifo"
 
-  try {
-    cacheSets = std::stoi(argv[1]);
-    setBlocks = std::stoi(argv[2]);
-    blockBytes = std::stoi(argv[3]);
-  } catch (const std::exception& e) {
-    std::cerr << "integer value incorrect, first three inputs need to be integers" << std::endl;
-    return 1;
-  } 
+    // Validate write-allocate policy
+    if (writeAllocate != "write-allocate" && writeAllocate != "no-write-allocate") {
+        throw invalid_argument("Fourth argument must be 'write-allocate' or 'no-write-allocate'.");
+    }
 
-  if (cacheSets <= 0 || log2(cacheSets) != floor(log2(cacheSets))) {
-    std::cerr << "variable 1 is not a power of 2" << std::endl;
-    return 1;
-  }
-  if (cacheSets <= 0 || log2(setBlocks) != floor(log2(setBlocks))) {
-    std::cerr << "variable 2 is not a power of 2" << std::endl;
-    return 1;
-  }
-  if (cacheSets <= 0 || log2(blockBytes) != floor(log2(blockBytes))) {
-    std::cerr << "variable 3 is not a power of 2" << std::endl;
-    return 1;
-  }
+    // Validate write policy
+    if (writePolicy != "write-through" && writePolicy != "write-back") {
+        throw invalid_argument("Fifth argument must be 'write-through' or 'write-back'.");
+    }
 
-  if (strcmp(argv[4], "write-allocate") != 0 && strcmp(argv[4], "no-write-allocate") != 0) {
-    std::cerr << "fourth argument is write-allocate or no-write-allocate" << std::endl;
-    return 1;
-  }
+    // Validate replacement policy
+    if (replacementPolicy != "lru" && replacementPolicy != "fifo") {
+        throw invalid_argument("Sixth argument must be 'lru' or 'fifo'.");
+    }
 
-  if (strcmp(argv[5], "write-through") != 0 && strcmp(argv[5], "write-back") != 0) {
-    std::cerr << "fifth argument needs to be write-through or write-back" << std::endl;
-    return 1;
-  }
+    // Logical constraint: "write-back" must be used with "write-allocate"
+    if (writePolicy == "write-back" && writeAllocate == "no-write-allocate") {
+        throw invalid_argument("'write-back' and 'no-write-allocate' cannot both be selected.");
+    }
+}
 
-  if (strcmp(argv[6], "lru") != 0 && strcmp(argv[6], "fifo") != 0) {
-    std::cerr << "sixth argument needs to be lru or fifo" << std::endl;
-    return 1;
-  }
+/**
+ * Main function for cache simulation.
+ * Reads memory access traces from standard input and processes them.
+ *
+ * @param argc Argument count.
+ * @param argv Argument vector.
+ * @return EXIT_SUCCESS if execution is successful, EXIT_FAILURE otherwise.
+ */
+int main(int argc, char **argv) {
+    try {
+        // Validate command-line arguments before proceeding
+        validateArguments(argc, argv);
 
-  if (strcmp(argv[5], "write-back") == 0 && strcmp(argv[4], "no-write-allocate") == 0) {
-    std::cerr << "write-back and no-write-allocate can't both be declared" << std::endl;
-    return 1;
-  }
+        // Initialize the cache based on input parameters
+        Cache cache(argv);
+        string line;
 
-  // If all validations pass, we can proceed to create the cache simulation
+        // Read memory accesses from standard input line by line
+        while (getline(cin, line)) {
+            istringstream iss(line);
+            vector<string> wordVector(3);
+            
+            // Read three parts of the input line (operation, address, size)
+            for (auto &word : wordVector) {
+                iss >> word;
+            }
 
-  Cache cache(argv);
-  string line;
+            // Convert the memory address from hex string to uint32_t
+            uint32_t address = stoul(wordVector[1], nullptr, 16);
 
-  while (std::getline(std::cin, line)) {
-    std::istringstream iss(line);
-    std::vector<std::string> wordVector(3);             
-      for (auto& word : wordVector) {                   
-        iss >> word;
-      }
+            // Calculate the number of bits for block offset and index
+            unsigned blockOffsetBits = log2(cache.byteCount);
+            unsigned indexBits = log2(cache.setCount);
 
-      std::uint32_t address = std::stoul(wordVector[1], nullptr, 16); 
-      unsigned arg1 = log2(cache.byteCount);              
-      unsigned arg2 = log2(cache.setCount);            
+            // Determine whether the access is a load or store operation
+            if (wordVector[0] == "l") {
+                cache.loadAddress(address, blockOffsetBits, indexBits);
+            } else {
+                cache.storeAddress(address, blockOffsetBits, indexBits);
+            }
+        }
 
-      if (wordVector[0] == "l") { 
-        cache.loadAddress(address, arg1, arg2);         
-      } else {    
-        cache.storeAddress(address, arg1, arg2);    
-      }
-  } 
+        // Print final cache performance statistics
+        cout << "Total loads: " << cache.loads << "\n"
+             << "Total stores: " << cache.stores << "\n"
+             << "Load hits: " << cache.loadHits << "\n"
+             << "Load misses: " << cache.loadMisses << "\n"
+             << "Store hits: " << cache.storeHits << "\n"
+             << "Store misses: " << cache.storeMisses << "\n"
+             << "Total cycles: " << cache.totalCycles << endl;
+             
+    } catch (const exception &e) {
+        // Print error message if an exception occurs and exit with failure
+        cerr << "Error: " << e.what() << endl;
+        return EXIT_FAILURE;
+    }
 
-  std::cout << "Total loads: " << cache.loads << std::endl;
-  std::cout << "Total stores: " << cache.stores << std::endl;
-  std::cout << "Load hits: " << cache.loadHits << std::endl;
-  std::cout << "Load misses: " << cache.loadMisses << std::endl;
-  std::cout << "Store hits: " << cache.storeHits << std::endl;
-  std::cout << "Store misses: " << cache.storeMisses << std::endl;
-  std::cout << "Total cycles: " << cache.totalCycles << std::endl;
-  
-  return 0;
+    return EXIT_SUCCESS;
 }
