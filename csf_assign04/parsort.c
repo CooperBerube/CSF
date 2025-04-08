@@ -26,7 +26,8 @@ int main( int argc, char **argv ) {
 
   // open the named file
   // TODO: open the named file
-
+  FILE *file;
+  file = fopen(argv[1], "r");
   // determine file size and number of elements
   unsigned long file_size, num_elements;
   // TODO: determine the file size and number of elements
