@@ -26,16 +26,30 @@ int main( int argc, char **argv ) {
 
   // open the named file
   // TODO: open the named file
-  FILE *file;
-  file = fopen(argv[1], "r");
+  fd = open(argv[1], O_RDWR);
+  if (fd < 0) {
+    fprintf(stderr, "file could not be opened");
+    return 1;
+  }
+
   // determine file size and number of elements
   unsigned long file_size, num_elements;
   // TODO: determine the file size and number of elements
+  struct stat statbuf;
+  int rc = fstat(fd, &statbuf);
+  if (rc != 0) {
+    fprintf(stderr, "fstat error occured, file data got problems");
+    return 1;
+  }
+  file_size = statbuf.st_size;
+  num_elements = file_size / sizeof(int64_t);
 
   // mmap the file data
   int64_t *arr;
   // TODO: mmap the file data
-
+  arr = mmap( NULL, file_size, PROT_READ | PROT_WRITE,
+    MAP_SHARED, fd, 0 );
+  close( fd );
   // Sort the data!
   int success;
   success = quicksort( arr, 0, num_elements, par_threshold );
