@@ -50,6 +50,9 @@ int main( int argc, char **argv ) {
   arr = mmap( NULL, file_size, PROT_READ | PROT_WRITE,
     MAP_SHARED, fd, 0 );
   close( fd );
+  if (arr == MAP_FAILED) {
+    fprintfI(stderr, "mmap failed terribly");
+  }
   // Sort the data!
   int success;
   success = quicksort( arr, 0, num_elements, par_threshold );
@@ -60,6 +63,7 @@ int main( int argc, char **argv ) {
 
   // Unmap the file data
   // TODO: unmap the file data
+  munmap(arr, file_size);
 
   return 0;
 }
