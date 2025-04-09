@@ -51,7 +51,7 @@ int main( int argc, char **argv ) {
     MAP_SHARED, fd, 0 );
   close( fd );
   if (arr == MAP_FAILED) {
-    fprintfI(stderr, "mmap failed terribly");
+    fprintf(stderr, "mmap failed terribly");
   }
   // Sort the data!
   int success;
@@ -197,8 +197,39 @@ int quicksort( int64_t *arr, unsigned long start, unsigned long end, unsigned lo
   // Recursively sort the left and right partitions
   int left_success, right_success;
   // TODO: modify this code so that the recursive calls execute in child processes
-  left_success = quicksort( arr, start, mid, par_threshold );
-  right_success = quicksort( arr, mid + 1, end, par_threshold );
+  pid_t child_pid = fork();
+  if ( child_pid == 0 ) {
+    // executing in the child
+    //   ...do work...
+    left_success = quicksort( arr, start, mid, par_threshold );
+    if ( /* work was done successfully */ )
+      exit( 0 );
+    else
+      exit( 1 );
+  } else if ( child_pid < 0 ) {
+    // fork failed
+    // ...handle error...
+  } else {
+    // in parent
+  }
+
+  pid_t child_pid = fork();
+  if ( child_pid == 0 ) {
+    // executing in the child
+    //   ...do work...
+    right_success = quicksort( arr, mid + 1, end, par_threshold );
+    if ( /* work was done successfully */ )
+      exit( 0 );
+    else
+      exit( 1 );
+  } else if ( child_pid < 0 ) {
+    // fork failed
+    // ...handle error...
+  } else {
+    // in parent
+  }
+  //left_success = quicksort( arr, start, mid, par_threshold );
+  //right_success = quicksort( arr, mid + 1, end, par_threshold );
 
   return left_success && right_success;
 }
