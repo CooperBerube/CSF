@@ -202,36 +202,59 @@ int quicksort( int64_t *arr, unsigned long start, unsigned long end, unsigned lo
     // executing in the child
     //   ...do work...
     left_success = quicksort( arr, start, mid, par_threshold );
-    if ( /* work was done successfully */ )
+    if ( left_success )
       exit( 0 );
     else
       exit( 1 );
   } else if ( child_pid < 0 ) {
     // fork failed
     // ...handle error...
+    fprintf(stderr, "fork failed!");
   } else {
     // in parent
   }
-
   pid_t child_pid = fork();
   if ( child_pid == 0 ) {
     // executing in the child
     //   ...do work...
     right_success = quicksort( arr, mid + 1, end, par_threshold );
-    if ( /* work was done successfully */ )
+    if ( right_success )
       exit( 0 );
     else
       exit( 1 );
   } else if ( child_pid < 0 ) {
     // fork failed
     // ...handle error...
+    fprintf(stderr, "fork failed!");
   } else {
     // in parent
+    //TODO: copy code below into this section once code below is done
+  }
+
+  int rc, wstatus;
+  rc = waitpid( child_pid, &wstatus, 0 );
+  if ( rc < 0 ) {
+    // waitpid failed
+    //...handle error...
+    fprintf(stderr, "waitpid failed!");
+  } else {
+    // check status of child
+    if ( !WIFEXITED( wstatus ) ) {
+      // child did not exit normally (e.g., it was terminated by a signal)
+      //   ...handle child failure...
+      fprintf(stderr, "Your child failed!");
+    } else if ( WEXITSTATUS( wstatus ) != 0 ) {
+      // child exited with a non-zero exit code
+      // ...handle child failure...
+      fprintf(stderr, "Your child failed!");
+    } else {
+      return left_success && right_success;
+    }
   }
   //left_success = quicksort( arr, start, mid, par_threshold );
   //right_success = quicksort( arr, mid + 1, end, par_threshold );
 
-  return left_success && right_success;
+  
 }
 
 // TODO: define additional helper functions if needed
