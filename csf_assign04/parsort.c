@@ -197,8 +197,8 @@ int quicksort( int64_t *arr, unsigned long start, unsigned long end, unsigned lo
   // Recursively sort the left and right partitions
   int left_success, right_success;
   // TODO: modify this code so that the recursive calls execute in child processes
-  pid_t child_pid = fork();
-  if ( child_pid == 0 ) {
+  pid_t child_pid1 = fork();
+  if ( child_pid1 == 0 ) {
     // executing in the child
     //   ...do work...
     left_success = quicksort( arr, start, mid, par_threshold );
@@ -206,15 +206,15 @@ int quicksort( int64_t *arr, unsigned long start, unsigned long end, unsigned lo
       exit( 0 );
     else
       exit( 1 );
-  } else if ( child_pid < 0 ) {
+  } else if ( child_pid1 < 0 ) {
     // fork failed
     // ...handle error...
     fprintf(stderr, "fork failed!");
   } else {
     // in parent
   }
-  pid_t child_pid = fork();
-  if ( child_pid == 0 ) {
+  pid_t child_pid2 = fork();
+  if ( child_pid2 == 0 ) {
     // executing in the child
     //   ...do work...
     right_success = quicksort( arr, mid + 1, end, par_threshold );
@@ -222,7 +222,7 @@ int quicksort( int64_t *arr, unsigned long start, unsigned long end, unsigned lo
       exit( 0 );
     else
       exit( 1 );
-  } else if ( child_pid < 0 ) {
+  } else if ( child_pid2 < 0 ) {
     // fork failed
     // ...handle error...
     fprintf(stderr, "fork failed!");
@@ -232,18 +232,20 @@ int quicksort( int64_t *arr, unsigned long start, unsigned long end, unsigned lo
   }
 
   int rc, wstatus;
-  rc = waitpid( child_pid, &wstatus, 0 );
-  if ( rc < 0 ) {
+  int rc2, wstatus2;
+  rc = waitpid( child_pid1, &wstatus, 0 );
+  rc2 = waitpid( child_pid2, &wstatus2, 0 );
+  if ( rc < 0 || rc2 < 0 ) {
     // waitpid failed
     //...handle error...
     fprintf(stderr, "waitpid failed!");
   } else {
     // check status of child
-    if ( !WIFEXITED( wstatus ) ) {
+    if ( !WIFEXITED( wstatus ) || !WIFEXITED( wstatus2 ) ) {
       // child did not exit normally (e.g., it was terminated by a signal)
       //   ...handle child failure...
       fprintf(stderr, "Your child failed!");
-    } else if ( WEXITSTATUS( wstatus ) != 0 ) {
+    } else if ( WEXITSTATUS( wstatus ) != 0 || WEXITSTATUS( wstatus2 ) != 0 ) {
       // child exited with a non-zero exit code
       // ...handle child failure...
       fprintf(stderr, "Your child failed!");
@@ -251,6 +253,7 @@ int quicksort( int64_t *arr, unsigned long start, unsigned long end, unsigned lo
       return left_success && right_success;
     }
   }
+  // Figure out how to add another part for child pid2
   //left_success = quicksort( arr, start, mid, par_threshold );
   //right_success = quicksort( arr, mid + 1, end, par_threshold );
 
