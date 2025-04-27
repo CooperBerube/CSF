@@ -20,7 +20,6 @@ struct ConnInfo {
   Connection* connection;
   const int* port;
   int clientfd;
-  rio_t currClient;
 };
 
 
@@ -41,43 +40,19 @@ void *worker(void *arg) {
   //       whatever pointer type describes the object(s) needed
   //       to communicate with a client (sender or receiver)
   ConnInfo *aux = static_cast<ConnInfo*>(arg); 
-  Message* response;
-  char buffer[Message::MAX_LEN+1];
-  buffer[0] = '\0';
+  Message received;
+  Message* toSend;
+  Connection* conn = aux->connection;
+  
+ 
   // TODO: read login message (should be tagged either with
   //       TAG_SLOGIN or TAG_RLOGIN), send response
-  ssize_t line_length = rio_readlineb(&(aux->currClient),buffer, Message::MAX_LEN + 1);
-  if (line_length < 0) {
-    //Error handling
-  }
-  buffer[line_length] = '\0';  // Null-terminate the buffer to avoid overflow
-  char* colon = strchr(buffer, ':');
-  //error handling
-  *colon = '\0';
-  char* tag = buffer;
-  char* payload = colon + 1;
-  User* currUser;
-  char* loginTag;
+  
+  conn->receive(received);
+  if (received.tag == TAG_RLOGIN) {
+    
+  } else if (received.tag == TAG_SLOGIN) {
 
-  if (strlen(tag) == 0 || strlen(payload) == 0) {
-    //error handling, send message to reciever or sender?
-    response->tag = TAG_ERR;
-    response->data = "incorrect tag";
-  } else if (strcmp(tag, TAG_RLOGIN) == 0) {
-    currUser = new User(payload);
-    response->tag = TAG_OK;
-    response->data = "recieved";
-    currUser->mqueue.enqueue(response);
-    loginTag = tag;
-  } else if (strcmp(tag, TAG_SLOGIN) == 0) {
-    currUser = new User(payload);
-    response->tag = TAG_OK;
-    response->data = "recieved";
-    currUser->mqueue.enqueue(response);\
-    loginTag = tag;
-  } else {
-    response->tag = TAG_ERR;
-    response->data = "incorrect tag";
   }
 
   // TODO: depending on whether the client logged in as a sender or
@@ -85,13 +60,7 @@ void *worker(void *arg) {
   //       separate helper functions for each of these possibilities
   //       is a good idea)
 
-  while(1) { //communicate with sender
-    if (strcmp(loginTag, TAG_RLOGIN)) { //for reciever loop
-
-    } else if (strcmp(loginTag, TAG_SLOGIN)) { //for sender loop
-
-    }
-  }
+  
 
   close(aux->clientfd);
   free(aux);
@@ -142,12 +111,10 @@ void Server::handle_client_requests() {
       // Error handling here
     }
     struct ConnInfo *aux = static_cast<struct ConnInfo *>(malloc(sizeof(struct ConnInfo)));
-    aux->connection = new Connection(clientfd);
+    Connection conn(clientfd);
+    aux->connection = &conn;
     aux->port = &m_port;
     aux->clientfd = clientfd;
-    rio_t in;
-    rio_readinitb(&in, clientfd);
-    aux->currClient = in;
     
 
     pthread_t curr_thread;
