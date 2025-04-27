@@ -43,14 +43,18 @@ void *worker(void *arg) {
   Message received;
   Message* toSend;
   Connection* conn = aux->connection;
+  std::string username;
   
  
   // TODO: read login message (should be tagged either with
   //       TAG_SLOGIN or TAG_RLOGIN), send response
   
   conn->receive(received);
+  User currUser(received.data);
   if (received.tag == TAG_RLOGIN) {
-    
+    while(1) {
+      
+    }
   } else if (received.tag == TAG_SLOGIN) {
 
   }
