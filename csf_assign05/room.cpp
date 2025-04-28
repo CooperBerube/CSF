@@ -29,7 +29,11 @@ void Room::remove_member(User *user) {
 
 void Room::broadcast_message(const std::string &sender_username, const std::string &message_text) {
   // TODO: send a message to every (receiver) User in the room
-   std::string message = room_name + ":" + sender_username + ":" + message_text;
+   std::string room_name_to_input = room_name;
+   room_name_to_input.resize(room_name_to_input.size ()- 1);
+   std::string uname = sender_username;
+   uname.resize(uname.size()-1);
+   std::string message = room_name_to_input + ":" + uname + ":" + message_text;
 
    // Make a copy of the members set under the lock to minimize lock duration
    UserSet members_copy;
