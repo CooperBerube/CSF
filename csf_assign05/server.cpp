@@ -68,39 +68,40 @@ void chat_with_sender(ConnInfo* aux, Connection* conn, User* currUser) {
     //std::cout << "received on server from sender: " << received.tag << ":" << received.data;
     if (received.tag == TAG_JOIN) {
       if (received.data.length() == 0) {
-        conn->send(Message(TAG_ERR, "no room name\n"));
+                conn->send(Message(TAG_ERR, "no room name"));
       } else {
-        conn->send(Message(TAG_OK, "received\n"));
+        
+        conn->send(Message(TAG_OK, "received"));
         room = (aux->server)->find_or_create_room(received.data);
         room->add_member(currUser);
       }
     } else if (received.tag == TAG_LEAVE) {
       if (room == nullptr) {
-        conn->send(Message(TAG_ERR, "not in a room\n"));
+        conn->send(Message(TAG_ERR, "no room to leave"));
       } else {
-        conn->send(Message(TAG_OK, "received\n"));
+        conn->send(Message(TAG_OK, "received"));
         room->remove_member(currUser);
         room = nullptr;
       }
     } else if (received.tag == TAG_SENDALL) {
       if (room == nullptr) {
-        conn->send(Message(TAG_ERR, "not in a room\n"));
+        conn->send(Message(TAG_ERR, "not in a room"));
       } else if (received.data.length() == 0) {
-        conn->send(Message(TAG_ERR, "no message to send\n"));
+        conn->send(Message(TAG_ERR, "no message to send"));
       } else {
         room->broadcast_message(currUser->username,received.data);
-        conn->send(Message(TAG_OK, "received\n"));
+        conn->send(Message(TAG_OK, "received"));
         //std::cout << "message queued: " << received.data;
       } 
     } else if (received.tag == TAG_QUIT) {
       if (room != nullptr) {
         room->remove_member(currUser);
         room = nullptr;
-      }
-      conn->send(Message(TAG_OK, "received\n"));
+      } //Do I need to throw an error for quit successfully
+      conn->send(Message(TAG_OK, "received"));
       break;
     }else {
-      conn->send(Message(TAG_ERR, "unkown tag\n"));
+      conn->send(Message(TAG_ERR, "unkown tag"));
     }
   }
   return;
@@ -156,7 +157,6 @@ void *worker(void *arg) {
     chat_with_sender(aux, conn, currUser);
   }
   
-
   close(aux->clientfd);
   free(aux);
 
@@ -187,7 +187,7 @@ bool Server::listen() {
   // TODO: use open_listenfd to create the server socket, return true
   //       if successful, false if not
   const char * string_port = (std::to_string(m_port)).c_str();
-  int serverfd = open_listenfd(string_port); //reviewed, maybe double check
+  int serverfd = open_listenfd(string_port); 
   if (serverfd < 0) {
     return false;
   } else {
@@ -221,6 +221,7 @@ Room *Server::find_or_create_room(const std::string &room_name) {
   // TODO: return a pointer to the unique Room object representing
   //       the named chat room, creating a new one if necessary
   auto it = m_rooms.find(room_name);
+  Guard g(m_lock);
   if (it == m_rooms.end()) {
     m_rooms[room_name] = new Room(room_name); //check to see how we should alocate this
     return m_rooms[room_name];
