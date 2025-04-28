@@ -53,17 +53,18 @@ void *worker(void *arg) {
   User* currUser;
   if (received.tag == TAG_RLOGIN || received.tag == TAG_SLOGIN) {
     toSend.tag = TAG_OK;
-    toSend.data = "received";
+    //toSend.data = "received";
     if (received.data.length() == 0) {
       toSend.tag = TAG_ERR;
-      toSend.data = "no username";
+      //toSend.data = "no username";
     } else {
-    currUser = new User(received.data);
+      currUser = new User(received.data);
     }
   } else {
     toSend.tag = TAG_ERR;
-    toSend.data = "error";
+    //toSend.data = "error";
   }
+  
   conn->send(toSend);
   
   // TODO: depending on whether the client logged in as a sender or
@@ -74,6 +75,7 @@ void *worker(void *arg) {
   Room* room = nullptr;
   if (userType == TAG_RLOGIN) {
     conn->receive(received);
+    
     if (received.tag != TAG_JOIN) {
       toSend.tag = TAG_ERR;
       toSend.data = "not join commmand";
@@ -84,39 +86,42 @@ void *worker(void *arg) {
       toSend.tag = TAG_OK;
       toSend.data = "received";
       room = (aux->server)->find_or_create_room(received.data); //come back to this
+      room->add_member(currUser);
     }
-    
     conn->send(toSend);
     while (1) {
       //add a delivery system from room to receiver
-      Message* message = currUser->mqueue.dequeue();
-      if (message == nullptr) {
-        continue;
+      Message* ref = (currUser->mqueue.dequeue());
+      if (ref == nullptr) {
+        
       } else {
-        conn->send(*message);
+        Message& message = *ref;
+        conn->send(message);
+        std::cout << "message sent to a receiver: " << message.tag + ":" << message.data;
       }
     }
 
   } else if (userType == TAG_SLOGIN) {
     while (1) {
       conn->receive(received);
+      std::cout << "received on server from sender: " << received.tag << ":" << received.data;
       if (received.tag == TAG_JOIN) {
         if (received.data.length() == 0) {
           toSend.tag == TAG_ERR;
-          toSend.data == "no room name";
+          toSend.data == "no room name\n";
         } else {
           toSend.tag == TAG_OK;
-          toSend.data == "received";
+          toSend.data == "received\n";
           room = (aux->server)->find_or_create_room(received.data);
           room->add_member(currUser);
         }
       } else if (received.tag == TAG_LEAVE) {
         if (room == nullptr) {
           toSend.tag = TAG_ERR;
-          toSend.data = "not in a room";
+          toSend.data = "not in a room\n";
         } else {
           toSend.tag == TAG_OK;
-          toSend.data == "received";
+          toSend.data == "received\n";
           room->remove_member(currUser);
           room = nullptr;
         }
@@ -124,19 +129,31 @@ void *worker(void *arg) {
       } else if (received.tag == TAG_SENDALL) {
         if (room == nullptr) {
           toSend.tag = TAG_ERR;
-          toSend.data = "not in a room";
+          toSend.data = "not in a room\n";
         } else if (received.data.length() == 0) {
           toSend.tag = TAG_ERR;
-          toSend.data = "no message to send";
+          toSend.data = "no message to send\n";
         } else {
           toSend.tag == TAG_OK;
-          toSend.data == "received";
+          toSend.data == "received\n";
           room->broadcast_message(currUser->username,received.data);
+          std::cout << "message queued: " << received.data;
+        } 
+      } else if (received.tag == TAG_QUIT) {
+        if (room != nullptr) {
+          room->remove_member(currUser);
+          room = nullptr;
         }
-      } else {
+        toSend.tag = TAG_OK;
+        toSend.data = "";
+        std::cout << "toSend info: " << toSend.tag << ":" << toSend.data;
+        conn->send(toSend);
+        break;
+      }else {
         toSend.tag = TAG_ERR;
-        toSend.data = "unknown tag";
+        toSend.data = "unknown tag\n";
       }
+      std::cout << "toSend info: " << toSend.tag << ":" << toSend.data;
       conn->send(toSend);
     }
   }
@@ -159,7 +176,7 @@ Server::Server(int port)
   , m_ssock(-1) {
   // TODO: initialize mutex
   int ret = pthread_mutex_init(&m_lock, nullptr);
-  assert(ret = 0);
+  assert(ret == 0);
 }
 
 Server::~Server() {
@@ -171,7 +188,8 @@ Server::~Server() {
 bool Server::listen() {
   // TODO: use open_listenfd to create the server socket, return true
   //       if successful, false if not
-  int serverfd = open_listenfd((char *) m_port); //Review later
+  const char * string_port = (std::to_string(m_port)).c_str();
+  int serverfd = open_listenfd(string_port); //reviewed, maybe double check
   if (serverfd < 0) {
     return false;
   } else {
@@ -190,8 +208,7 @@ void Server::handle_client_requests() {
       std::cerr << "Error accepting client" << std::endl;
     }
     struct ConnInfo *aux = static_cast<struct ConnInfo *>(malloc(sizeof(struct ConnInfo)));
-    Connection conn(clientfd);
-    aux->connection = &conn;
+    aux->connection = new Connection(clientfd);
     aux->port = &m_port;
     aux->clientfd = clientfd;
     aux->server = this;
@@ -208,8 +225,10 @@ Room *Server::find_or_create_room(const std::string &room_name) {
   auto it = m_rooms.find(room_name);
   if (it == m_rooms.end()) {
     m_rooms[room_name] = new Room(room_name); //check to see how we should alocate this
+    std::cout << "find_or_create_room 1" << std::endl;
     return m_rooms[room_name];
   } else {
+    std::cout << "find_or_create_room 2" << std::endl;
     return m_rooms[room_name];
   }
 }
