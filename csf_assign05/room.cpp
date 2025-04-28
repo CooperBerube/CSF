@@ -33,7 +33,9 @@ void Room::broadcast_message(const std::string &sender_username, const std::stri
    room_name_to_input.resize(room_name_to_input.size ()- 1);
    std::string uname = sender_username;
    uname.resize(uname.size()-1);
-   std::string message = room_name_to_input + ":" + uname + ":" + message_text;
+   std::string mtext = message_text;
+   mtext.resize(mtext.size()-1);
+   std::string message = room_name_to_input + ":" + uname + ":" + mtext;
 
    // Make a copy of the members set under the lock to minimize lock duration
    UserSet members_copy;
