@@ -88,8 +88,13 @@ void *worker(void *arg) {
     
     conn->send(toSend);
     while (1) {
-      conn->receive(received);
       //add a delivery system from room to receiver
+      Message* message = currUser->mqueue.dequeue();
+      if (message == nullptr) {
+        continue;
+      } else {
+        conn->send(*message);
+      }
     }
 
   } else if (userType == TAG_SLOGIN) {
@@ -110,6 +115,8 @@ void *worker(void *arg) {
           toSend.tag = TAG_ERR;
           toSend.data = "not in a room";
         } else {
+          toSend.tag == TAG_OK;
+          toSend.data == "received";
           room->remove_member(currUser);
           room = nullptr;
         }
@@ -122,6 +129,8 @@ void *worker(void *arg) {
           toSend.tag = TAG_ERR;
           toSend.data = "no message to send";
         } else {
+          toSend.tag == TAG_OK;
+          toSend.data == "received";
           room->broadcast_message(currUser->username,received.data);
         }
       } else {
